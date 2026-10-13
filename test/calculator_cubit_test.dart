@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jack_calculator/bloc/calculator_cubit.dart';
-import 'package:jack_calculator/engine/calculator_engine.dart';
 
 void main() {
   test('cubit emits 5 after 2 + 3 =', () {

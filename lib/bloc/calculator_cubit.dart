@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../engine/calculator_engine.dart';
 import 'calculator_state.dart';
 
+// 讓 UI 只經由此橋接層取得 CalcOp，維持「Cubit 是 UI↔engine 唯一橋」的邊界。
+export '../engine/calculator_engine.dart' show CalcOp;
+
 class CalculatorCubit extends Cubit<CalculatorState> {
   final CalculatorEngine _engine = CalculatorEngine();
 
