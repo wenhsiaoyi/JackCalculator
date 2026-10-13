@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "wenhsiaoyi" "\0"
-            VALUE "FileDescription", "jack_calculator" "\0"
+            VALUE "FileDescription", "Jack計算機" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "jack_calculator" "\0"
+            VALUE "InternalName", "Jack計算機" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 wenhsiaoyi. All rights reserved." "\0"
             VALUE "OriginalFilename", "jack_calculator.exe" "\0"
-            VALUE "ProductName", "jack_calculator" "\0"
+            VALUE "ProductName", "Jack計算機" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

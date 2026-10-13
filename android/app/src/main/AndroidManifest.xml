@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="jack_calculator"
+        android:label="Jack計算機"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
