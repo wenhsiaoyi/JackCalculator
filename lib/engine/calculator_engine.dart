@@ -21,6 +21,7 @@ class CalculatorEngine {
   bool _startNewEntry = true;
   bool _hasError = false;
   Decimal _grandTotal = Decimal.zero;
+  Decimal? _muCost;
 
   /// 由 [CalculatorCubit] 在啟動與設定變更時注入。
   void applySettings(CalcSettings settings) => _settings = settings;
@@ -136,6 +137,39 @@ class CalculatorEngine {
     _startNewEntry = true;
   }
 
+  /// Casio 式二元 MU：讀取待執行運算子與兩個運算元。
+  ///
+  /// 第一次：`成本 × 利潤率% MU` → 售價 = 成本 ÷ (1 − 利潤率/100)。
+  /// 第二次：顯示利潤額 = 售價 − 成本。
+  /// 售價本身就是那場乘法的答案，所以完成時吃掉 `_pendingOp`
+  /// （否則之後按 `=` 會變成 `成本 × 售價`），這也讓 MU 天然不進 GT。
+  void mu() {
+    if (_hasError) return;
+
+    final cost = _muCost;
+    if (cost != null) {
+      final profit = _applyRounding(_entryValue - cost);
+      _muCost = null;
+      _accumulator = profit;
+      _pendingOp = null;
+      _setEntryResult(profit);
+      return;
+    }
+
+    if (_pendingOp != CalcOp.multiply) return; // no-op
+
+    final divisor = Decimal.one - _entryValue.shift(-2);
+    if (divisor == Decimal.zero) {
+      _hasError = true;
+      return;
+    }
+    final sellingPrice = _divide(_accumulator, divisor);
+    _muCost = _accumulator;
+    _accumulator = sellingPrice;
+    _pendingOp = null;
+    _setEntryResult(sellingPrice);
+  }
+
   bool _compute() {
     final op = _pendingOp!;
     final rhs = _entryValue;
@@ -195,6 +229,7 @@ class CalculatorEngine {
     _entry = '0';
     _startNewEntry = true;
     _grandTotal = Decimal.zero;
+    _muCost = null;
     _hasError = false;
   }
 
