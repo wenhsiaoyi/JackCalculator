@@ -1,19 +1,31 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../engine/calc_settings.dart';
 import '../engine/calculator_engine.dart';
 import 'calculator_state.dart';
 
-// 讓 UI 只經由此橋接層取得 CalcOp，維持「Cubit 是 UI↔engine 唯一橋」的邊界。
+// 讓 UI 只經由此橋接層取得 CalcOp／CalcSettings，維持「Cubit 是 UI↔engine 唯一橋」的邊界。
 export '../engine/calculator_engine.dart' show CalcOp;
+export '../engine/calc_settings.dart' show CalcSettings, RoundingMode;
 
 class CalculatorCubit extends Cubit<CalculatorState> {
+  CalculatorCubit()
+      : super(const CalculatorState(display: '0', hasError: false)) {
+    _engine.applySettings(CalcSettings.defaults);
+  }
+
   final CalculatorEngine _engine = CalculatorEngine();
 
-  CalculatorCubit()
-      : super(const CalculatorState(display: '0', hasError: false));
+  void _sync() => emit(CalculatorState(
+        display: _engine.display,
+        hasError: _engine.hasError,
+        hasGT: _engine.hasGT,
+      ));
 
-  void _sync() =>
-      emit(CalculatorState(display: _engine.display, hasError: _engine.hasError));
+  void applySettings(CalcSettings settings) {
+    _engine.applySettings(settings);
+    _sync();
+  }
 
   void onDigit(String d) {
     _engine.inputDigit(d);
@@ -52,6 +64,26 @@ class CalculatorCubit extends Cubit<CalculatorState> {
 
   void toggleSign() {
     _engine.toggleSign();
+    _sync();
+  }
+
+  void onGrandTotal() {
+    _engine.showGrandTotal();
+    _sync();
+  }
+
+  void onTaxPlus() {
+    _engine.taxPlus();
+    _sync();
+  }
+
+  void onTaxMinus() {
+    _engine.taxMinus();
+    _sync();
+  }
+
+  void onMu() {
+    _engine.mu();
     _sync();
   }
 }
