@@ -110,12 +110,20 @@ class CalculatorEngine {
     return s;
   }
 
-  // Task 4 會補完整 allClear 並加入 clearEntry。
   void allClear() {
     _accumulator = Decimal.zero;
     _pendingOp = null;
     _entry = '0';
     _startNewEntry = true;
     _hasError = false;
+  }
+
+  void clearEntry() {
+    if (_hasError) {
+      allClear();
+      return;
+    }
+    _entry = '0';
+    _startNewEntry = true;
   }
 }

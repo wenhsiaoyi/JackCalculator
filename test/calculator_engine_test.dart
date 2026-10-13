@@ -110,4 +110,40 @@ void main() {
       expect(e.display, '0.3333333333');
     });
   });
+
+  group('clear & error', () {
+    test('divide by zero sets error and clears on next digit', () {
+      final e = CalculatorEngine()
+        ..inputDigit('5')
+        ..applyOperator(CalcOp.divide)
+        ..inputDigit('0')
+        ..equals();
+      expect(e.hasError, true);
+      expect(e.display, 'Error');
+      e.inputDigit('7');
+      expect(e.hasError, false);
+      expect(e.display, '7');
+    });
+
+    test('allClear resets to 0', () {
+      final e = CalculatorEngine()
+        ..inputDigit('9')
+        ..applyOperator(CalcOp.add)
+        ..inputDigit('9');
+      e.allClear();
+      expect(e.display, '0');
+      expect(e.hasError, false);
+    });
+
+    test('clearEntry keeps pending op, resets entry', () {
+      final e = CalculatorEngine()
+        ..inputDigit('2')
+        ..applyOperator(CalcOp.add)
+        ..inputDigit('8')
+        ..clearEntry()
+        ..inputDigit('3')
+        ..equals();
+      expect(e.display, '5'); // 2 + 3 = 5（8 被清掉）
+    });
+  });
 }
