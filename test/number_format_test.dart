@@ -64,8 +64,9 @@ void main() {
       expect(formatForDisplay('1234.5678', fmt(decimalPlaces: 4)), '1,234.5678');
     });
 
-    test('超過設定位數時只截顯示（engine 已先捨入，這裡是防禦）', () {
-      expect(formatForDisplay('1.239', fmt(decimalPlaces: 2)), '1.23');
+    test('超過設定位數的輸入照原樣顯示（鎖不裁輸入）', () {
+      expect(formatForDisplay('1.239', fmt(decimalPlaces: 2)), '1.239');
+      expect(formatForDisplay('1.5', fmt(decimalPlaces: 0)), '1.5');
     });
   });
 }

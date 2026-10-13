@@ -4,6 +4,7 @@ import '../engine/calc_settings.dart';
 ///
 /// 契約：輸入永遠是 engine 產出的 raw 字串（無逗號、無補零）。
 /// `F` 模式不補零；輸入中的尾點（`12.`）保留且不補零。
+/// 超過鎖定位置的 raw 屬「輸入中」狀態，照原樣顯示（鎖只在計算輸出捨入與補零生效）。
 String formatForDisplay(String raw, CalcSettings settings) {
   if (raw.isEmpty || raw == 'Error') return raw;
 
@@ -22,12 +23,8 @@ String formatForDisplay(String raw, CalcSettings settings) {
   var fracPart = parts.length > 1 ? parts[1] : '';
 
   final places = settings.effectiveDecimalPlaces;
-  if (places != null) {
-    if (fracPart.length > places) {
-      fracPart = fracPart.substring(0, places);
-    } else if (!editing) {
-      fracPart = fracPart.padRight(places, '0');
-    }
+  if (places != null && fracPart.length < places && !editing) {
+    fracPart = fracPart.padRight(places, '0');
   }
 
   if (settings.grouping) intPart = _group(intPart);

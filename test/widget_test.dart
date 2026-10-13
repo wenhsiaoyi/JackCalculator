@@ -122,4 +122,23 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('超位輸入照原樣顯示、按 = 後才捨入（final review 回歸）', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    for (final d in ['1', '.', '2', '3', '5']) {
+      await tester.tap(find.text(d));
+    }
+    await tester.pump();
+    final display = find.byKey(const Key('displayValue'));
+    expect(tester.widget<Text>(display).data, '1.235');
+
+    for (final d in ['+', '0', '=']) {
+      await tester.tap(find.text(d));
+    }
+    await tester.pump();
+    expect(tester.widget<Text>(display).data, '1.24');
+  });
 }
