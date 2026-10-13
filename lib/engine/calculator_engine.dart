@@ -94,8 +94,7 @@ class CalculatorEngine {
       _accumulator = _entryValue;
     }
     _pendingOp = op;
-    _startNewEntry = true;
-    _entry = _clean(_accumulator);
+    _setEntryResult(_accumulator);
   }
 
   void equals() {
@@ -103,13 +102,37 @@ class CalculatorEngine {
     if (!_compute()) return;
     _grandTotal += _accumulator;
     _pendingOp = null;
-    _startNewEntry = true;
-    _entry = _clean(_accumulator);
+    _setEntryResult(_accumulator);
   }
 
   void showGrandTotal() {
     if (_hasError) return;
-    _entry = _clean(_grandTotal);
+    _setEntryResult(_grandTotal);
+  }
+
+  /// 含稅價：entry × (1 + t/100)。只作用於 entry，不碰 accumulator／pendingOp。
+  void taxPlus() {
+    if (_hasError) return;
+    final result = _applyRounding(_entryValue * _taxFactor());
+    _setEntryResult(result);
+  }
+
+  /// 未稅價（反推）：entry ÷ (1 + t/100)。除法走餘數法，只捨入一次。
+  void taxMinus() {
+    if (_hasError) return;
+    final factor = _taxFactor();
+    if (factor == Decimal.zero) {
+      _hasError = true;
+      return;
+    }
+    _setEntryResult(_divide(_entryValue, factor));
+  }
+
+  /// 1 + t/100。用 shift(-2) 而非 `/`，避免產生 Rational。
+  Decimal _taxFactor() => Decimal.one + _settings.taxRate.shift(-2);
+
+  void _setEntryResult(Decimal value) {
+    _entry = _clean(value);
     _startNewEntry = true;
   }
 
