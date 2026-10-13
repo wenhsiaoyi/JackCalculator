@@ -1,17 +1,39 @@
 import 'package:decimal/decimal.dart';
 
+import 'calc_settings.dart';
+
 enum CalcOp { add, subtract, multiply, divide }
 
 /// 純 Dart 計算引擎，全程 Decimal，不 import Flutter。
 class CalculatorEngine {
-  static const int _divisionScale = 10;
   static const int _maxDigits = 16;
+
+  /// 只在 [RoundingMode.float] 模式使用的除法截斷位（Phase 1 行為）。
+  static const int _floatDivisionScale = 10;
+
+  CalcSettings _settings = CalcSettings.raw;
 
   Decimal _accumulator = Decimal.zero;
   CalcOp? _pendingOp;
   String _entry = '0';
   bool _startNewEntry = true;
   bool _hasError = false;
+
+  /// 由 [CalculatorCubit] 在啟動與設定變更時注入。
+  void applySettings(CalcSettings settings) => _settings = settings;
+
+  /// 非除法路徑唯一的捨入出口（`+ − ×`）。
+  /// 除法在 `_divide()` 內用真實餘數一次到位，不得再經過這裡。
+  Decimal _applyRounding(Decimal d) {
+    final n = _settings.effectiveDecimalPlaces;
+    if (n == null) return d; // F：不捨入
+    return switch (_settings.rounding) {
+      RoundingMode.cut => d.truncate(scale: n),
+      RoundingMode.halfUp => d.round(scale: n),
+      RoundingMode.up => d.sign < 0 ? -(-d).ceil(scale: n) : d.ceil(scale: n),
+      RoundingMode.float => d,
+    };
+  }
 
   String get display => _hasError ? 'Error' : _entry;
   bool get hasError => _hasError;
@@ -84,20 +106,20 @@ class CalculatorEngine {
       }
       _accumulator = _divide(_accumulator, rhs);
     } else {
-      _accumulator = switch (op) {
+      _accumulator = _applyRounding(switch (op) {
         CalcOp.add => _accumulator + rhs,
         CalcOp.subtract => _accumulator - rhs,
         CalcOp.multiply => _accumulator * rhs,
         CalcOp.divide => _accumulator, // 於上方處理，此分支不可達
-      };
+      });
     }
     return true;
   }
 
   static Decimal _divide(Decimal a, Decimal b) {
-    final shifted = a.shift(_divisionScale);
+    final shifted = a.shift(_floatDivisionScale);
     final quotient = shifted ~/ b; // BigInt，截斷除法
-    return Decimal.fromBigInt(quotient).shift(-_divisionScale);
+    return Decimal.fromBigInt(quotient).shift(-_floatDivisionScale);
   }
 
   static String _clean(Decimal d) {
