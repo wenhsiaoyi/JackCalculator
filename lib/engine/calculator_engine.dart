@@ -20,6 +20,7 @@ class CalculatorEngine {
   String _entry = '0';
   bool _startNewEntry = true;
   bool _hasError = false;
+  Decimal _grandTotal = Decimal.zero;
 
   /// 由 [CalculatorCubit] 在啟動與設定變更時注入。
   void applySettings(CalcSettings settings) => _settings = settings;
@@ -39,6 +40,13 @@ class CalculatorEngine {
 
   String get display => _hasError ? 'Error' : _entry;
   bool get hasError => _hasError;
+
+  /// GT 總計（`=` 完成一筆時累加）。
+  Decimal get grandTotal => _grandTotal;
+
+  /// 定義是「總和不為 0」，不是「本 session 用過 GT」。
+  /// 副作用：一筆 `X = 0` 進 GT 後總和仍是 0，indicator 不會亮 —— 刻意如此。
+  bool get hasGT => _grandTotal != Decimal.zero;
 
   Decimal get _entryValue => Decimal.tryParse(_entry) ?? Decimal.zero;
 
@@ -93,9 +101,16 @@ class CalculatorEngine {
   void equals() {
     if (_hasError || _pendingOp == null) return;
     if (!_compute()) return;
+    _grandTotal += _accumulator;
     _pendingOp = null;
     _startNewEntry = true;
     _entry = _clean(_accumulator);
+  }
+
+  void showGrandTotal() {
+    if (_hasError) return;
+    _entry = _clean(_grandTotal);
+    _startNewEntry = true;
   }
 
   bool _compute() {
@@ -156,6 +171,7 @@ class CalculatorEngine {
     _pendingOp = null;
     _entry = '0';
     _startNewEntry = true;
+    _grandTotal = Decimal.zero;
     _hasError = false;
   }
 
