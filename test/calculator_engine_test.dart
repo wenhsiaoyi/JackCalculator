@@ -146,4 +146,24 @@ void main() {
       expect(e.display, '5'); // 2 + 3 = 5（8 被清掉）
     });
   });
+
+  group('phase 2 regression invariants', () {
+    test('1 / 3 still truncates to 10 places under default settings', () {
+      final e = CalculatorEngine()
+        ..inputDigit('1')
+        ..applyOperator(CalcOp.divide)
+        ..inputDigit('3')
+        ..equals();
+      expect(e.display, '0.3333333333');
+    });
+
+    test('default engine ignores rounding until settings are applied', () {
+      final e = CalculatorEngine()
+        ..inputDigit('1')
+        ..applyOperator(CalcOp.divide)
+        ..inputDigit('8')
+        ..equals();
+      expect(e.display, '0.125');
+    });
+  });
 }

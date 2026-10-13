@@ -19,6 +19,7 @@ class CalculatorEngine {
   CalcOp? _pendingOp;
   String _entry = '0';
   bool _startNewEntry = true;
+  bool _pendingSign = false;
   bool _hasError = false;
   Decimal _grandTotal = Decimal.zero;
   Decimal? _muCost;
@@ -54,7 +55,8 @@ class CalculatorEngine {
   void inputDigit(String digit) {
     if (_hasError) allClear();
     if (_startNewEntry) {
-      _entry = digit;
+      _entry = _pendingSign ? '-$digit' : digit;
+      _pendingSign = false;
       _startNewEntry = false;
     } else {
       if (_entry.replaceAll(RegExp(r'[^0-9]'), '').length >= _maxDigits) return;
@@ -65,7 +67,8 @@ class CalculatorEngine {
   void inputDecimalPoint() {
     if (_hasError) allClear();
     if (_startNewEntry) {
-      _entry = '0.';
+      _entry = _pendingSign ? '-0.' : '0.';
+      _pendingSign = false;
       _startNewEntry = false;
     } else if (!_entry.contains('.')) {
       _entry += '.';
@@ -80,10 +83,14 @@ class CalculatorEngine {
         : s.substring(0, s.length - 1);
   }
 
+  /// ± 只作用於 entry，永不回溯 accumulator。
   void toggleSign() {
     if (_hasError) return;
+    if (_startNewEntry) {
+      _pendingSign = !_pendingSign; // 套用給下一個被輸入的數字
+      return;
+    }
     if (_entry == '0' || _entry == '0.') return;
-    if (_startNewEntry) _accumulator = -_accumulator;
     _entry = _entry.startsWith('-') ? _entry.substring(1) : '-$_entry';
   }
 
@@ -135,6 +142,7 @@ class CalculatorEngine {
   void _setEntryResult(Decimal value) {
     _entry = _clean(value);
     _startNewEntry = true;
+    _pendingSign = false;
   }
 
   /// Casio 式二元 MU：讀取待執行運算子與兩個運算元。
@@ -228,6 +236,7 @@ class CalculatorEngine {
     _pendingOp = null;
     _entry = '0';
     _startNewEntry = true;
+    _pendingSign = false;
     _grandTotal = Decimal.zero;
     _muCost = null;
     _hasError = false;
@@ -240,5 +249,6 @@ class CalculatorEngine {
     }
     _entry = '0';
     _startNewEntry = true;
+    _pendingSign = false;
   }
 }
