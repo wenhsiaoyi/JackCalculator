@@ -2,7 +2,7 @@
 
 Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackCalculator ，branch `main`，`pubspec.yaml` 設 `publish_to: 'none'`。
 
-**已脫離範本階段（2026-10-13 Phase 1 完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `BlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 9 個 Dart 檔案（engine / bloc / core / views）。計算機目前只實作 Phase 1（四則運算 + Decimal 精度），稅率/GT/MU/歷史/主題等見下方「Phase 路線圖」。
+**已脫離範本階段（2026-10-13 Phase 1 完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `BlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 9 個 Dart 檔案（engine / bloc / core / views）。計算機目前只實作 Phase 1（四則運算 + Decimal 精度）；**Phase 2 設計規格已定案但尚未開工**（見下方「Phase 路線圖」與 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`）。
 
 ## 環境（本機實測 2026-10-13）
 
@@ -13,7 +13,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 - Android SDK 在 `E:\Android\Sdk`，現況已足夠建置：platforms **android-33 / android-36**、build-tools **33.0.2 / 36.0.0**、ndk **28.2.13676358**、cmdline-tools **23.0.0**（新版 Android CLI，套件名用斜線格式）、emulator 37.2.12、system-images android-36
 - **開發工具快取全部在 E:，不要寫回 C:** `GRADLE_USER_HOME=E:\gradle-home`、`PUB_CACHE=E:\pub-cache`（使用者層級環境變數）。Gradle wrapper 指定的 **Gradle 9.3.1 已手動安裝**在 `E:\gradle-home\wrapper\dists\`，見下方「Gradle distribution 下載」
 - **`C:\tools\Android` 那套 30.30 GB 的舊 Android SDK 已於 2026-10-13 刪除**，見下方「環境變更」
-- 無 codegen（未引入 build_runner）、無第三方 plugin；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`（transitive：bloc/provider/nested、rational/intl）。**尚未**引入持久化（Hive/Isar）
+- 無 codegen（未引入 build_runner）、**目前零第三方 plugin**；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`（transitive：bloc/provider/nested、rational/intl）。**尚未**引入持久化 —— Phase 2 實作時會引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
 - **沒有 CI**（無 `.github/`、無 pre-commit hook）。驗證只能靠本機指令
 
 ## 指令
@@ -139,14 +139,34 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 需求來源：`specs/功能需求滿足這樣需求.md`（PRD）與 `specs/Flutter細部功能.md`（技術架構指南），各自同名目錄有對應 HTML。Phase 1 設計與實作計畫在 `docs/superpowers/specs/2026-10-13-jack-calculator-phase1-design.md` 與 `docs/superpowers/plans/2026-10-13-jack-calculator-phase1.md`。
 
 - **Phase 1（已完成，branch `feat/phase1-calculator`）**：Cubit + `decimal` 零誤差四則運算 + Material 3 現代簡約 UI + App 名稱。
-- **Phase 2（未開工）**：GT、Tax+/Tax-、MU、F/CUT/UP/5-4 捨入 + 小數位鎖定、千分位/多國格式。會需要引入設定持久化。
-- **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本地儲存（Hive/Isar）+ 匯出（pdf/csv/share_plus）。
-- **Phase 4（未開工）**：音效/震動回饋、擬真桌上型主題（第二套 `ThemeData`）。
+- **Phase 2（設計已定案 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`，實作未開工）**：GT、Tax+/Tax-、MU、F/CUT/UP/5-4 捨入 + 小數位鎖定、**千分位（僅國際分位）**、設定頁 + `shared_preferences` 持久化。同時收掉下方四項已知延後項。
+- **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本地儲存（**只能用 `hive_ce`，`hive` 在本專案裝不了**，見下方「依賴政策」）+ **M1–M3 多組記憶體**（原 PRD:23 有列卻不在任何 Phase，2026-10-13 裁定移入這裡）+ 匯出（pdf/csv/share_plus）。
+- **Phase 4（未開工）**：音效/震動回饋、擬真桌上型主題（第二套 `ThemeData`）、橫式展開進階按鍵。
 
-**每個 Phase 各走一輪 brainstorming→spec→plan→實作。** 最終審查已延後至 Phase 2 的項目（見下方「已知延後項」）。
+**每個 Phase 各走一輪 brainstorming→spec→plan→實作。** Phase 1 的四項延後項**已全部納入 Phase 2 範圍**（對帳表在 Phase 2 spec 的「Phase 1 延後項對帳」節）。
 
-### 已知延後項（Phase 1 最終審查裁定，非阻斷）
-- `CalculatorState` 無 `==`/`hashCode` → Cubit no-op 事件會多一次重繪（僅效能，無錯誤）。Phase 2 手寫 `==`（**不要**加 equatable，會違反「只 flutter_bloc+decimal」約束）。
-- `±` 在 `A <op> ± =`（按 `=` 前不輸入第二運算元）的退化路徑會產生符號/量值歧義（四種運算子都受影響）；正常路徑 `A op ± B =` 自洽。需先寫 ± 真值表＋測試再改。
-- 引擎邊界未測：`maxDigits` 上限、負值/尾點退格、運算子重按、trunc-vs-round。
-- `CalcButton` 最小高 64×5 列 ≈ 516dp 下限，極矮/橫向視窗會 overflow（Windows 預設 1280×720 有餘裕）。
+### 已知延後項（Phase 1 最終審查裁定 → 2026-10-13 全數由 Phase 2 spec 收掉，尚未實作）
+- `CalculatorState` 無 `==`/`hashCode` → Cubit no-op 事件會多一次重繪（僅效能，無錯誤）。Phase 2 手寫 `==`（**不加 equatable** —— 依下方依賴政策，它不在 Phase 2 的明確需求內）。
+- `±` 在 `A <op> ± =`（按 `=` 前不輸入第二運算元）的退化路徑會產生符號/量值歧義（四種運算子都受影響）；正常路徑 `A op ± B =` 自洽。Phase 2 採「**± 只作用於 entry，永不回溯 accumulator**」＋真值表測試。
+- 引擎邊界未測：`maxDigits` 上限、負值/尾點退格、運算子重按、trunc-vs-round。Phase 2 與捨入測試同輪補。
+- `CalcButton` 最小高 64×5 列 ≈ 516dp 下限，極矮/橫向視窗會 overflow（Windows 預設 1280×720 有餘裕）。Phase 2 用「5 欄 × **維持 5 列**」佈局 ＋ `LayoutBuilder` 44dp 自適應下限關掉。
+
+## 依賴政策（2026-10-13 Phase 2 定案，取代原本「只 flutter_bloc+decimal」的默規）
+
+一階依賴僅限**同時**滿足以下三者的套件：
+
+1. Flutter 官方／flutter.dev 維護，或活躍維護的社群 fork（**引入前務必檢查最新版的 Dart SDK 上限能否與本專案 `^3.13.5` 共同解析**）。
+2. 在本專案四個目標中**至少 Windows** 可建置（Windows 是唯一能本機驗證的目標）。
+3. 不需要 `build_runner`／codegen。
+
+每個 Phase 只為**該 Phase 的明確需求**引入儲存相關套件，不提前引入。據此，Phase 2 的設定儲存（`shared_preferences`）與 Phase 3 的記錄儲存（`hive_ce`）**共存不視為重複** —— 層級不同（key-value 設定 vs 可查詢記錄），**設定不要遷移**。
+
+查依賴 metadata 的本機可用指令（pub.dev API 實測 0.41s，與 Gradle 那條坑完全不同，加依賴不構成本機網路風險）：
+
+```bash
+curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.load(sys.stdin)['latest']['pubspec'];print(d.get('environment'), list((d.get('flutter',{}).get('plugin',{}) or {}).get('platforms',{}).keys()) or 'pure Dart')"
+```
+
+- **`hive` 2.2.3 不可用**：pubspec 限制 `sdk: >=2.12.0 <3.0.0`，Dart 3 會被 pub 拒絕解析（結論出自 metadata，未做 live resolve；workspace 外的 `dart pub get` 探測會被權限擋掉）。要 box 就用 `hive_ce`（2.20.2，`^3.4.0`，純 Dart、零 plugin）。
+- `shared_preferences` 2.5.6 要 `flutter >=3.41.0`（本機 3.47.7 ✅），宣告 android/ios/linux/windows 四平台 —— 正好是本專案的四個目標。它會是專案**第一個 plugin**，Android 端多出 Gradle plugin 專案，`flutter build apk` 要重驗。
+- **不要用 `intl` 的 `NumberFormat` 做千分位**：`intl` 雖已是 transitive，但 locale grouping ≠ 商用機的「千分位開關」（部分 locale 用空格分隔），會引來與需求無關的行為差異。`lib/core/number_format.dart` 手寫即可。
