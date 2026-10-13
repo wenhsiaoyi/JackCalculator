@@ -11,6 +11,8 @@ class CalculatorEngine {
   /// 只在 [RoundingMode.float] 模式使用的除法截斷位（Phase 1 行為）。
   static const int _floatDivisionScale = 10;
 
+  static final Decimal _two = Decimal.fromInt(2);
+
   CalcSettings _settings = CalcSettings.raw;
 
   Decimal _accumulator = Decimal.zero;
@@ -116,10 +118,27 @@ class CalculatorEngine {
     return true;
   }
 
-  static Decimal _divide(Decimal a, Decimal b) {
-    final shifted = a.shift(_floatDivisionScale);
-    final quotient = shifted ~/ b; // BigInt，截斷除法
-    return Decimal.fromBigInt(quotient).shift(-_floatDivisionScale);
+  /// 除法是唯一會產生無限小數的運算。為避免「先截斷、再捨入」把餘數證據弄丟，
+  /// 這裡直接除到目標位數，並用真實餘數決定是否進位 —— 全程只捨入一次。
+  Decimal _divide(Decimal a, Decimal b) {
+    final n = _settings.effectiveDecimalPlaces;
+    if (n == null) {
+      // F：不捨入，維持 Phase 1 的截斷 10 位。
+      final quotient = a.shift(_floatDivisionScale) ~/ b;
+      return Decimal.fromBigInt(quotient).shift(-_floatDivisionScale);
+    }
+    final scaled = a.shift(n);
+    final q = scaled ~/ b; // BigInt，向零截斷
+    final r = scaled.remainder(b); // 符號跟隨 a
+    final negative = a.sign * b.sign < 0;
+    final bump = switch (_settings.rounding) {
+      RoundingMode.cut => false,
+      RoundingMode.up => r != Decimal.zero,
+      RoundingMode.halfUp => r.abs() * _two >= b.abs(),
+      RoundingMode.float => false,
+    };
+    final value = bump ? (negative ? q - BigInt.one : q + BigInt.one) : q;
+    return Decimal.fromBigInt(value).shift(-n);
   }
 
   static String _clean(Decimal d) {
