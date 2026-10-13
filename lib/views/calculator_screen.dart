@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/calculator_cubit.dart';
 import '../bloc/calculator_state.dart';
+import '../bloc/settings_cubit.dart';
 import 'components/calc_button.dart';
 import 'components/display_screen.dart';
+import 'components/status_indicator.dart';
 
 class CalculatorScreen extends StatelessWidget {
   const CalculatorScreen({super.key});
@@ -16,9 +18,21 @@ class CalculatorScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            BlocBuilder<CalculatorCubit, CalculatorState>(
-              builder: (_, s) =>
-                  DisplayScreen(display: s.display, hasError: s.hasError),
+            BlocBuilder<SettingsCubit, CalcSettings>(
+              builder: (_, settings) =>
+                  BlocBuilder<CalculatorCubit, CalculatorState>(
+                builder: (_, state) => Column(
+                  children: [
+                    DisplayScreen(
+                      display: state.display,
+                      settings: settings,
+                      hasError: state.hasError,
+                      hasGT: state.hasGT,
+                    ),
+                    StatusIndicator(settings: settings),
+                  ],
+                ),
+              ),
             ),
             Expanded(
               child: Padding(
