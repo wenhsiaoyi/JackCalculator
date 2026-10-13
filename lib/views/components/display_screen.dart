@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/number_format.dart';
+import '../../engine/calc_settings.dart';
 
 class DisplayScreen extends StatelessWidget {
   const DisplayScreen({
@@ -24,7 +25,7 @@ class DisplayScreen extends StatelessWidget {
         fit: BoxFit.scaleDown,
         alignment: Alignment.centerRight,
         child: Text(
-          formatForDisplay(display),
+          formatForDisplay(display, CalcSettings.raw),
           key: const Key('displayValue'),
           style: TextStyle(
             fontSize: 64,
