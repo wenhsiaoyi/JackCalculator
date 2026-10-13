@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jack_calculator/main.dart';
+import 'package:jack_calculator/views/components/calc_button.dart';
+import 'package:jack_calculator/views/components/display_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -54,17 +56,41 @@ void main() {
     expect(find.byKey(const Key('indPlaces')), findsNothing);
   });
 
-  testWidgets('5×5 鍵盤：新鍵存在', (tester) async {
+  testWidgets('預設收起：標準四欄盤存在、商用鍵不存在', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const JackCalculator());
     await tester.pumpAndSettle();
 
-    for (final label in ['GT', 'MU', 'Tax+', 'Tax−', 'AC', 'C', '⌫', '±', '=']) {
+    for (final label in ['AC', 'C', '⌫', '÷', '×', '−', '+', '±', '.', '=']) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
+    for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
+      expect(find.text(label), findsNothing, reason: label);
+    }
+    expect(find.text('進階'), findsOneWidget);
   });
 
-  testWidgets('Tax+ 點擊後顯示含稅值', (tester) async {
+  testWidgets('chevron 切換：展開出現商用鍵、再收起消失', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+    for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+    expect(find.text('收起'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+    for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
+      expect(find.text(label), findsNothing, reason: label);
+    }
+    expect(find.text('進階'), findsOneWidget);
+  });
+
+  testWidgets('展開後 Tax+ 點擊後顯示含稅值', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const JackCalculator());
     await tester.pumpAndSettle();
@@ -72,6 +98,8 @@ void main() {
     for (final d in ['1', '0', '0', '0']) {
       await tester.tap(find.text(d));
     }
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
     await tester.tap(find.text('Tax+'));
     await tester.pump();
 
@@ -140,5 +168,54 @@ void main() {
     }
     await tester.pump();
     expect(tester.widget<Text>(display).data, '1.24');
+  });
+
+  testWidgets('展開後 GT 鍵把總計帶入顯示', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    for (final d in ['2', '+', '3', '=']) {
+      await tester.tap(find.text(d));
+    }
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+
+    expect(find.text('GT'), findsNWidgets(2)); // 徽章 ＋ 按鍵
+    await tester.tap(find.widgetWithText(CalcButton, 'GT'));
+    await tester.pump();
+
+    final display = find.byKey(const Key('displayValue'));
+    expect(tester.widget<Text>(display).data, '5.00');
+  });
+
+  testWidgets('窄窗展開態不 overflow', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(320, 260);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('寬窗：內容置中且寬度上限 420', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(1280, 720);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    final size = tester.getSize(find.byType(DisplayScreen));
+    expect(size.width, 420);
+    expect(tester.getCenter(find.byType(DisplayScreen)).dx, closeTo(640, 1));
   });
 }
