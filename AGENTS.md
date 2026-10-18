@@ -2,7 +2,7 @@
 
 Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackCalculator ，branch `main`，`pubspec.yaml` 設 `publish_to: 'none'`。
 
-**已脫離範本階段（2026-10-13 Phase 1 完成、Phase 2 完成；2026-10-14 行動裝置版面完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `MultiBlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 14 個 Dart 檔案（engine / data / bloc / core / views）。計算機已完成 Phase 1（四則運算 + Decimal 精度）；**Phase 2 已完成（branch `feat/phase2-commercial-core`）**；**行動裝置版面已完成（branch `feat/mobile-layout`）**：4 欄基本盤＋chevron 進階面板（預設收起、展開時數字盤壓縮）、⚙ 移至顯示區頂列、桌機置中限寬 420dp（純視圖層）。見下方「Phase 路線圖」與 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`、`docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`。
+**已脫離範本階段（2026-10-13 Phase 1 完成、Phase 2 完成；2026-10-14 行動裝置版面完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `MultiBlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 14 個 Dart 檔案（engine / data / bloc / core / views）。計算機已完成 Phase 1（四則運算 + Decimal 精度）；**Phase 2 已完成（branch `feat/phase2-commercial-core`）**；**行動裝置版面已完成（branch `feat/mobile-layout`）**：4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）＋chevron 無文字雙箭頭展開膠囊面板 GT/MU/Tax±（預設收起、展開時全盤轉膠囊並壓縮）、⚙ 顯示區頂列、桌機置中限寬 420dp（純視圖層）。見下方「Phase 路線圖」與 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`、`docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`。
 
 ## 環境（本機實測 2026-10-13）
 
@@ -21,7 +21,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 ```powershell
 flutter pub get
 flutter analyze          # lint；設定於 analysis_options.yaml（flutter_lints 6.0）
-flutter test             # 全部測試（目前 126 個）
+flutter test             # 全部測試（目前 128 個）
 flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
@@ -140,7 +140,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 
 - **Phase 1（已完成，branch `feat/phase1-calculator`）**：Cubit + `decimal` 零誤差四則運算 + Material 3 現代簡約 UI + App 名稱。
 - **Phase 2（已完成，branch `feat/phase2-commercial-core`，設計 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`）**：GT、Tax+/Tax-、MU、F/CUT/UP/5-4 捨入 + 小數位鎖定、**千分位（僅國際分位）**、設定頁 + `shared_preferences` 持久化。同時已收掉下方四項 Phase 1 延後項。
-- **行動裝置版面（已完成，branch `feat/mobile-layout`，2026-10-14）**：手機優先版面重排 —— 標準 4 欄盤＋chevron 面板收 GT／MU／Tax±、⚙ 進顯示區頂列、桌機整欄置中限寬 420dp。設計 `docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`、計畫 `docs/superpowers/plans/2026-10-14-jack-calculator-mobile-layout.md`。
+- **行動裝置版面（已完成，branch `feat/mobile-layout`，2026-10-14）**：手機優先版面重排 —— 標準 4 欄盤＋chevron 面板收 GT／MU／Tax±、⚙ 進顯示區頂列、桌機整欄置中限寬 420dp。設計 `docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`、計畫 `docs/superpowers/plans/2026-10-14-jack-calculator-mobile-layout.md`。**v2（branch `feat/mobile-layout-v2`，2026-10-18）**：圓形鍵＋膠囊面板重排 —— 4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）、chevron 無文字雙箭頭展開膠囊面板收 GT／MU／Tax±（預設收起、展開時全盤轉膠囊並壓縮）。設計 `docs/superpowers/specs/2026-10-18-jack-calculator-mobile-layout-v2-design.md`、計畫 `docs/superpowers/plans/2026-10-18-jack-calculator-mobile-layout-v2.md`。
 - **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本地儲存（**只能用 `hive_ce`，`hive` 在本專案裝不了**，見下方「依賴政策」）+ **M1–M3 多組記憶體**（原 PRD:23 有列卻不在任何 Phase，2026-10-13 裁定移入這裡）+ 匯出（pdf/csv/share_plus）。
 - **Phase 4（未開工）**：音效/震動回饋、擬真桌上型主題（第二套 `ThemeData`）、橫式展開進階按鍵、行動版面的展開動畫與視覺皮膚。
 
