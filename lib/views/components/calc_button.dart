@@ -59,6 +59,7 @@ class CalcButton extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onPressed,
+              splashColor: fg.withValues(alpha: 0.25),
               customBorder: switch (shape) {
                 CalcButtonShape.circle => const CircleBorder(),
                 CalcButtonShape.capsule => RoundedRectangleBorder(
@@ -74,9 +75,9 @@ class CalcButton extends StatelessWidget {
                     height: visualH,
                     child: DecoratedBox(
                       decoration: switch (shape) {
-                        CalcButtonShape.circle => BoxDecoration(
+                        CalcButtonShape.circle => ShapeDecoration(
                             color: bg,
-                            shape: BoxShape.circle,
+                            shape: const CircleBorder(),
                           ),
                         CalcButtonShape.capsule => BoxDecoration(
                             color: bg,
