@@ -19,7 +19,8 @@ class CalcButton extends StatelessWidget {
   final CalcButtonVariant variant;
   final CalcButtonShape shape;
 
-  /// 字級 = 可用高度 × fontScale（行動版面 v2：主鍵 0.60、面板鍵 0.34）。
+  /// 字級 = 字高基準 × fontScale（行動版面 v2：主鍵 0.60、面板鍵 0.34）。
+  /// 圓形的字高基準是整格高（維持 v2 前比例）；膠囊的字高基準是膠囊視覺高。
   /// 外層 FittedBox(scaleDown) 保證窄窗不 overflow。
   final double fontScale;
 
@@ -42,24 +43,59 @@ class CalcButton extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final available =
+          final maxW = constraints.maxWidth;
+          final maxH =
               constraints.maxHeight.isFinite ? constraints.maxHeight : 64.0;
-          final fontSize = available * fontScale;
-          return TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: bg,
-              foregroundColor: fg,
-              padding: EdgeInsets.zero,
-              minimumSize: Size(0, available),
-              shape: switch (shape) {
+          // 膠囊高設上限 0.62×欄寬（量自參考圖 130/210），否則列高 ≥ 欄寬時
+          // StadiumBorder 會退化成圓。觸控範圍維持整格（L2），視覺縮小為已知項。
+          final double visualH = switch (shape) {
+            CalcButtonShape.circle => maxW < maxH ? maxW : maxH,
+            CalcButtonShape.capsule =>
+              maxW * 0.62 < maxH ? maxW * 0.62 : maxH,
+          };
+          final fontSize =
+              (shape == CalcButtonShape.circle ? maxH : visualH) * fontScale;
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              customBorder: switch (shape) {
                 CalcButtonShape.circle => const CircleBorder(),
-                CalcButtonShape.capsule => const StadiumBorder(),
+                CalcButtonShape.capsule => RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(visualH / 2),
+                  ),
               },
-            ),
-            onPressed: onPressed,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(label, style: TextStyle(fontSize: fontSize)),
+              child: SizedBox(
+                width: maxW,
+                height: maxH,
+                child: Center(
+                  child: SizedBox(
+                    width: maxW,
+                    height: visualH,
+                    child: DecoratedBox(
+                      decoration: switch (shape) {
+                        CalcButtonShape.circle => BoxDecoration(
+                            color: bg,
+                            shape: BoxShape.circle,
+                          ),
+                        CalcButtonShape.capsule => BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(visualH / 2),
+                          ),
+                      },
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            label,
+                            style: TextStyle(fontSize: fontSize, color: fg),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           );
         },
