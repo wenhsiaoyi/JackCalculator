@@ -67,7 +67,8 @@ void main() {
     for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
       expect(find.text(label), findsNothing, reason: label);
     }
-    expect(find.text('進階'), findsOneWidget);
+    expect(find.text('進階'), findsNothing);
+    expect(find.text('收起'), findsNothing);
   });
 
   testWidgets('chevron 切換：展開出現商用鍵、再收起消失', (tester) async {
@@ -80,14 +81,14 @@ void main() {
     for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
-    expect(find.text('收起'), findsOneWidget);
+    expect(find.text('收起'), findsNothing);
 
     await tester.tap(find.byKey(const Key('advancedToggle')));
     await tester.pump();
     for (final label in ['GT', 'MU', 'Tax+', 'Tax−']) {
       expect(find.text(label), findsNothing, reason: label);
     }
-    expect(find.text('進階'), findsOneWidget);
+    expect(find.text('進階'), findsNothing);
   });
 
   testWidgets('展開後 Tax+ 點擊後顯示含稅值', (tester) async {
@@ -189,6 +190,47 @@ void main() {
 
     final display = find.byKey(const Key('displayValue'));
     expect(tester.widget<Text>(display).data, '5.00');
+  });
+
+  testWidgets('收起態鍵位結構：頂列 AC C ± ÷、底列 0 . ⌫ =', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    double dyOf(String label) =>
+        tester.getCenter(find.widgetWithText(CalcButton, label)).dy;
+
+    final topDy = dyOf('AC');
+    for (final label in ['C', '±', '÷']) {
+      expect((dyOf(label) - topDy).abs(), lessThan(1), reason: label);
+    }
+    expect(dyOf('7'), greaterThan(topDy));
+
+    final bottomDy = dyOf('0');
+    for (final label in ['.', '⌫', '=']) {
+      expect((dyOf(label) - bottomDy).abs(), lessThan(1), reason: label);
+    }
+    expect((dyOf('±') - bottomDy).abs(), greaterThan(1));
+  });
+
+  testWidgets('形狀：收起態全圓形、展開全膠囊', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    for (final btn in tester.widgetList<CalcButton>(find.byType(CalcButton))) {
+      expect(btn.shape, CalcButtonShape.circle);
+    }
+
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+
+    final expanded =
+        tester.widgetList<CalcButton>(find.byType(CalcButton)).toList();
+    expect(expanded.length, greaterThan(20));
+    for (final btn in expanded) {
+      expect(btn.shape, CalcButtonShape.capsule);
+    }
   });
 
   testWidgets('窄窗展開態不 overflow', (tester) async {

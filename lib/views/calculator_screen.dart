@@ -77,20 +77,24 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           if (_advancedExpanded)
                             _row([
                               _btn('GT', cubit.onGrandTotal,
-                                  CalcButtonVariant.function),
+                                  CalcButtonVariant.function,
+                                  fontScale: 0.34),
                               _btn('MU', cubit.onMu,
-                                  CalcButtonVariant.function),
+                                  CalcButtonVariant.function,
+                                  fontScale: 0.34),
                               _btn('Tax+', cubit.onTaxPlus,
-                                  CalcButtonVariant.function),
+                                  CalcButtonVariant.function,
+                                  fontScale: 0.34),
                               _btn('Tax−', cubit.onTaxMinus,
-                                  CalcButtonVariant.function),
+                                  CalcButtonVariant.function,
+                                  fontScale: 0.34),
                             ]),
                           _row([
                             _btn('AC', cubit.allClear,
                                 CalcButtonVariant.function),
                             _btn('C', cubit.clearEntry,
                                 CalcButtonVariant.function),
-                            _btn('⌫', cubit.backspace,
+                            _btn('±', cubit.toggleSign,
                                 CalcButtonVariant.function),
                             _btn('÷', () => cubit.applyOperator(CalcOp.divide),
                                 CalcButtonVariant.operator),
@@ -117,11 +121,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                 CalcButtonVariant.operator),
                           ]),
                           _row([
-                            _btn('±', cubit.toggleSign,
-                                CalcButtonVariant.function),
                             _num('0', cubit),
                             _btn('.', cubit.onDecimalPoint,
                                 CalcButtonVariant.number),
+                            _btn('⌫', cubit.backspace,
+                                CalcButtonVariant.function),
                             _btn('=', cubit.equals, CalcButtonVariant.equals),
                           ]),
                         ],
@@ -144,9 +148,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Widget _row(List<Widget> buttons) =>
       Expanded(child: Row(children: buttons));
 
-  Widget _btn(String label, VoidCallback onTap, CalcButtonVariant variant) =>
+  Widget _btn(String label, VoidCallback onTap, CalcButtonVariant variant,
+          {double fontScale = 0.60}) =>
       Expanded(
-        child: CalcButton(label: label, onPressed: onTap, variant: variant),
+        child: CalcButton(
+          label: label,
+          onPressed: onTap,
+          variant: variant,
+          shape:
+              _advancedExpanded ? CalcButtonShape.capsule : CalcButtonShape.circle,
+          fontScale: fontScale,
+        ),
       );
 
   Widget _num(String digit, CalculatorCubit cubit) =>
@@ -167,19 +179,13 @@ class _AdvancedToggle extends StatelessWidget {
       onTap: onTap,
       child: SizedBox(
         height: 28,
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              expanded ? Icons.expand_less : Icons.expand_more,
-              size: 18,
-              color: scheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              expanded ? '收起' : '進階',
-              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-            ),
+            Icon(Icons.expand_less,
+                size: 12, color: scheme.onSurfaceVariant),
+            Icon(Icons.expand_more,
+                size: 12, color: scheme.onSurfaceVariant),
           ],
         ),
       ),

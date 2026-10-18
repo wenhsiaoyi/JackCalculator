@@ -2,17 +2,26 @@ import 'package:flutter/material.dart';
 
 enum CalcButtonVariant { number, operator, function, equals }
 
+enum CalcButtonShape { circle, capsule }
+
 class CalcButton extends StatelessWidget {
   const CalcButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.variant = CalcButtonVariant.number,
+    this.shape = CalcButtonShape.circle,
+    this.fontScale = 0.60,
   });
 
   final String label;
   final VoidCallback onPressed;
   final CalcButtonVariant variant;
+  final CalcButtonShape shape;
+
+  /// 字級 = 可用高度 × fontScale（行動版面 v2：主鍵 0.60、面板鍵 0.34）。
+  /// 外層 FittedBox(scaleDown) 保證窄窗不 overflow。
+  final double fontScale;
 
   @override
   Widget build(BuildContext context) {
@@ -33,20 +42,19 @@ class CalcButton extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 64dp 的硬下限是 Phase 1 的 overflow 來源；改成跟著可用高度走。
-          // 44dp 只是設計參考：真的不夠高時以「不 overflow」優先。
           final available =
               constraints.maxHeight.isFinite ? constraints.maxHeight : 64.0;
-          final fontSize = (available * 0.38).clamp(12.0, 24.0).toDouble();
+          final fontSize = available * fontScale;
           return TextButton(
             style: TextButton.styleFrom(
               backgroundColor: bg,
               foregroundColor: fg,
               padding: EdgeInsets.zero,
               minimumSize: Size(0, available),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-              ),
+              shape: switch (shape) {
+                CalcButtonShape.circle => const CircleBorder(),
+                CalcButtonShape.capsule => const StadiumBorder(),
+              },
             ),
             onPressed: onPressed,
             child: FittedBox(
