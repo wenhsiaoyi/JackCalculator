@@ -111,6 +111,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 全域 git `core.autocrlf = true`，repo 內**沒有** `.gitattributes` → `git add` 時會出現 `LF will be replaced by CRLF` 警告。屬正常現象，不要因此去「修正」那些檔案。若要讓跨平台貢獻乾淨，加 `.gitattributes`（`* text=auto eol=lf`）勝過個別調整。
 
 ### 其他
+- **四平台圖示由 `tool/generate_icons.py` 產生**（來源圖 `docs/icons/Logo2.jpg`，需本機 Python 的 PIL＋numpy）。要改圖示就改腳本再重跑，**不要手改** `android/.../res/mipmap-*/`、`ios/.../AppIcon.appiconset/` 或 `windows/runner/resources/app_icon.ico` 那些產出檔。刻意**不引入 `flutter_launcher_icons`**（依依賴政策，它不是明確需求）。Android 端是 legacy＋自適應圖示並存（`mipmap-anydpi-v26/ic_launcher.xml` 與 `ic_launcher_round.xml`，manifest 有 `roundIcon`）；前景白圖騰按「安全區＝直徑 66dp 的圓」縮放，若改成依方框縮放會被啟動器的圓形遮罩切掉四角的 ＋－×÷。
 - `flutter create .` 可安全用來補平台目錄：`.metadata` 已把 `lib/main.dart` 列為 `unmanaged_files`，不會被覆蓋。使用前先確認 `flutter config` 的 `--enable-windows-desktop` / `--enable-linux-desktop` 仍開著。
 - `pubspec.lock` **有進版控**，別隨手 `flutter pub upgrade`，會產生無關 diff。
 - Android `applicationId` / namespace = `wenhsiaoyi.jack_calculator`（含底線）。上架前請確認商店是否接受。
