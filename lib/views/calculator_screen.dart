@@ -42,6 +42,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             settings: settings,
                             hasError: state.hasError,
                             hasGT: state.hasGT,
+                            livePreview: state.livePreview,
                             onSettingsTap: () => _openSettings(context),
                           ),
                           // Task 15 偏離（已於報告揭露，非 brief 內容）：

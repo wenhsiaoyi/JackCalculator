@@ -260,4 +260,47 @@ void main() {
     expect(size.width, 420);
     expect(tester.getCenter(find.byType(DisplayScreen)).dx, closeTo(640, 1));
   });
+
+  testWidgets('即時預覽：65 × 4 過程中顯示 260.00，= 後消失', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('livePreview')), findsNothing);
+
+    await tester.tap(find.text('6'));
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('×'));
+    await tester.pump();
+    expect(find.byKey(const Key('livePreview')), findsNothing);
+
+    await tester.tap(find.text('4'));
+    await tester.pump();
+    final preview = find.byKey(const Key('livePreview'));
+    expect(preview, findsOneWidget);
+    expect(tester.widget<Text>(preview).data, '260.00');
+
+    await tester.tap(find.text('='));
+    await tester.pump();
+    expect(find.byKey(const Key('livePreview')), findsNothing);
+    expect(tester.widget<Text>(find.byKey(const Key('displayValue'))).data,
+        '260.00');
+  });
+
+  testWidgets('AC 後即時預覽消失', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('6'));
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('×'));
+    await tester.tap(find.text('4'));
+    await tester.pump();
+    expect(find.byKey(const Key('livePreview')), findsOneWidget);
+
+    await tester.tap(find.text('AC'));
+    await tester.pump();
+    expect(find.byKey(const Key('livePreview')), findsNothing);
+  });
 }

@@ -10,6 +10,7 @@ class DisplayScreen extends StatelessWidget {
     required this.settings,
     this.hasError = false,
     this.hasGT = false,
+    this.livePreview,
     this.onSettingsTap,
   });
 
@@ -18,6 +19,9 @@ class DisplayScreen extends StatelessWidget {
   final CalcSettings settings;
   final bool hasError;
   final bool hasGT;
+
+  /// 即時運算預覽（raw 字串），null＝不渲染該行。
+  final String? livePreview;
   final VoidCallback? onSettingsTap;
 
   @override
@@ -78,6 +82,21 @@ class DisplayScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (livePreview != null) ...[
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                formatForDisplay(livePreview!, settings),
+                key: const Key('livePreview'),
+                style: TextStyle(
+                  fontSize: 20,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -20,6 +20,7 @@ class CalculatorCubit extends Cubit<CalculatorState> {
         display: _engine.display,
         hasError: _engine.hasError,
         hasGT: _engine.hasGT,
+        livePreview: _engine.livePreview,
       ));
 
   void applySettings(CalcSettings settings) {

@@ -52,6 +52,25 @@ class CalculatorEngine {
 
   Decimal get _entryValue => Decimal.tryParse(_entry) ?? Decimal.zero;
 
+  /// 即時運算預覽：「accumulator op entry」的即時值（raw 字串，同 display 慣例）。
+  /// 只在輸入第二運算元中可預覽；剛按運算子、= 之後、error、÷0 皆 null。
+  /// 算術路徑與 [_compute] 逐一對應，預覽值恒等於 = 結果。零副作用。
+  String? get livePreview {
+    if (_hasError || _pendingOp == null || _startNewEntry) return null;
+    final rhs = _entryValue;
+    final op = _pendingOp!;
+    if (op == CalcOp.divide && rhs == Decimal.zero) return null;
+    final result = op == CalcOp.divide
+        ? _divide(_accumulator, rhs)
+        : _applyRounding(switch (op) {
+            CalcOp.add => _accumulator + rhs,
+            CalcOp.subtract => _accumulator - rhs,
+            CalcOp.multiply => _accumulator * rhs,
+            CalcOp.divide => _accumulator, // 於上方處理，此分支不可達
+          });
+    return _clean(result);
+  }
+
   void inputDigit(String digit) {
     if (_hasError) allClear();
     if (_startNewEntry) {
