@@ -2,7 +2,7 @@
 
 Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackCalculator ，branch `main`，`pubspec.yaml` 設 `publish_to: 'none'`。
 
-**已脫離範本階段（2026-10-13 Phase 1 完成、Phase 2 完成；2026-10-14 行動裝置版面完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `MultiBlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 14 個 Dart 檔案（engine / data / bloc / core / views）。計算機已完成 Phase 1（四則運算 + Decimal 精度）；**Phase 2 已完成（branch `feat/phase2-commercial-core`）**；**行動裝置版面已完成（branch `feat/mobile-layout`）**：4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）＋chevron 無文字雙箭頭展開膠囊面板 GT/MU/Tax±（預設收起、展開時全盤轉膠囊並壓縮）、⚙ 顯示區頂列、桌機置中限寬 420dp（純視圖層）。見下方「Phase 路線圖」與 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`、`docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`。
+**已脫離範本階段（2026-10-13 Phase 1 完成、Phase 2 完成；2026-10-14 行動裝置版面完成）**：`lib/main.dart` 是「Jack計算機」App 根（`JackCalculator` → `MultiBlocProvider` + `MaterialApp`），counter 範例與舊 `test/widget_test.dart` 已移除。`lib/` 現有 14 個 Dart 檔案（engine / data / bloc / core / views）。計算機已完成 Phase 1（四則運算 + Decimal 精度）；**Phase 2 已完成（branch `feat/phase2-commercial-core`）**；**行動裝置版面已完成（branch `feat/mobile-layout`）**：4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）＋chevron 無文字雙箭頭展開膠囊面板 GT/MU/Tax±（預設收起、展開時全盤轉膠囊並壓縮）、⚙ 顯示區頂列、桌機置中限寬 420dp（純視圖層）；**手機版已鎖定直式、停用旋轉**（Android `screenOrientation="portrait"`、iOS `Info.plist` 僅直式；桌機不受影響；Android 16 起大螢幕由系統政策忽略）。見下方「Phase 路線圖」與 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`、`docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`。
 
 ## 環境（本機實測 2026-10-13）
 
@@ -21,7 +21,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 ```powershell
 flutter pub get
 flutter analyze          # lint；設定於 analysis_options.yaml（flutter_lints 6.0）
-flutter test             # 全部測試（目前 128 個）
+flutter test             # 全部測試（目前 142 個）
 flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
