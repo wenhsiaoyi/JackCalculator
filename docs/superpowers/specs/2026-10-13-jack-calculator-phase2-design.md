@@ -329,7 +329,7 @@ flutter build apk        # plugin 的 Android 端要能編（第一次有 plugin
 
 ## Phase 3 銜接點
 
-- **M1–M3 多組獨立記憶體從「未排入任何 Phase」移入 Phase 3**（原本它出現在 PRD:23 卻不在四期路線圖任何一處，屬孤兒需求）。Phase 3 已有歷史紙帶＋本地儲存的工作量，記憶體與之共享同一持久化決策最省。需同步改 AGENTS.md 路線圖。
+- **M1–M3 多組獨立記憶體從「未排入任何 Phase」移入 Phase 3**（原本它出現在 PRD:23 卻不在四期路線圖任何一處，屬孤兒需求）。Phase 3 已有歷史紙帶＋本機儲存的工作量，記憶體與之共享同一持久化決策最省。需同步改 AGENTS.md 路線圖。
 - `SettingsRepository` 是 `shared_preferences` 唯一接觸點；Phase 3 引入記錄儲存（`hive_ce`／Isar）時**不要把設定遷過去**（層級不同，見「依賴政策」）。
 - Phase 3 紙帶要記錄「捨入後的值」—— 因 D1 鏈捨入，`_entry`／`_accumulator` 已是機台語意的最終值，直接記錄即可，不需回溯未捨入的中間值；但 Tax／MU 的中間值若要進紙帶，需要一組新的 debug 級資料，屆時再評估。
 - 擬真主題（Phase 4）會需要第二套 `ThemeData` 與橫式展開按鍵；Phase 2 的 5×5 矩陣是它的基礎，不要預先抽兩套佈局。
