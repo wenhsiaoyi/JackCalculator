@@ -27,16 +27,16 @@
 ### 明確不在範圍（YAGNI）
 - **印度計數系統分位**：PRD:33 有列，但對台灣商用場景價值趨近於零，且會把 formatter 從字串插入升格成「分組策略」抽象並拖進負號／不足位邊界。日後要補時新增 `GroupingStrategy` 即可，**不需要動 engine**。
 - **MU「反之亦然」（已知售價求成本）**：PRD:11 有這句，但 `售價 × (100 − 利潤率)% =` 用既有四則即可算出；做成實體鍵會和 `MU` 的二元按鍵模型（要吃 `pendingOp`）打架，並再擠掉一個按鍵空間。
-- **Tax− 的減法扣稅模式（`A − A×t`）與 European 開關**：见「Tax 語意」。
+- **Tax− 的減法扣稅模式（`A − A×t`）與 European 開關**：見「Tax 語意」。
 - **橫式展開進階按鍵**（`Flutter細部功能.md`:25-27 建議）：需同時維護兩套按鍵矩陣與兩套佈局測試，留給 Phase 4（擬真主題本來就要動佈局）。
-- **Tax／MU 結果寫入 GT**：见「GT 真值表」。
-- **雲端同步、匯出、历史记录**。
+- **Tax／MU 結果寫入 GT**：見「GT 真值表」。
+- **雲端同步、匯出、歷史記錄**。
 
 ## 技術選型
 
 | 項目 | 決定 | 說明 |
 | --- | --- | --- |
-| 高精度數學 | `decimal` 3.2.6（既有） | 捨入直接用 `round(scale:)`／`truncate(scale:)`／`ceil(scale:)`。 |
+| 高精度數學 | `decimal` 3.2.6（既有） | 非除法捨入直接用 `round(scale:)`／`truncate(scale:)`／`ceil(scale:)`；除法自己用 `~/`（BigInt 向零截斷）配 `remainder()` 取真實餘數，一次捨到目標位數。 |
 | 設定持久化 | **`shared_preferences: ^2.5.6`** | 專案**第一個 plugin**。要 `flutter >=3.41.0`（本機 3.47.7 ✅）、宣告支援 android／ios／linux／windows —— 正好是本專案的四個目標。 |
 | ~~`hive`~~ | **不可用** | 最新版 2.2.3 的 pubspec 限制 `sdk: >=2.12.0 <3.0.0`，本專案 Dart 3.13.5 會被 pub 拒絕解析。（結論出自 pub 官方 API 的 metadata，未做 live resolve 查證。） |
 | `hive_ce` 2.20.2 | **退路，非主計畫** | 純 Dart、無 plugin。若 `shared_preferences` 在 Android 建置上出問題（見「風險」），改用它在 Phase 2 存設定、Phase 3 存記錄。 |
@@ -68,7 +68,7 @@ lib/
 │   └── settings_repository.dart  # 新：shared_preferences 的唯一接觸點
 ├── engine/
 │   ├── calc_settings.dart        # 新：不可變值物件 ＋ RoundingMode 列舉（純 Dart）
-│   └── calculator_engine.dart    # 改：持 CalcSettings；applyRounding 為唯一捨入出口；新增 GT／Tax／MU／±修正
+│   └── calculator_engine.dart    # 改：持 CalcSettings（預設 raw）；applyRounding 為非除法路的捨入出口、_divide 內含餘數法單次捨入；新增 GT／Tax／MU／±修正
 ├── bloc/
 │   ├── calculator_cubit.dart     # 改：＋applySettings／onGT／onTaxPlus／onTaxMinus／onMu
 │   ├── settings_cubit.dart       # 新：載入／儲存／變更設定
@@ -77,7 +77,7 @@ lib/
     ├── calculator_screen.dart    # 改：5×5 鍵盤、indicator 細列、BlocListener
     ├── settings_screen.dart      # 新：稅率／捨入模式／小數位／千分位
     └── components/
-        ├── calc_button.dart      # 改：自適應最小高度（LayoutBuilder，44dp 下限＋字級縮放）
+        ├── calc_button.dart      # 改：自適應高度（LayoutBuilder 取可用高度＋FittedBox 字級縮放）
         ├── display_screen.dart   # 改：套用 formatForDisplay、GT 標記
         └── status_indicator.dart # 新：5% | 5/4 | 2位 | ,
 main.dart                          # 改：MultiBlocProvider（SettingsCubit ＋ CalculatorCubit）
@@ -89,8 +89,11 @@ main.dart                          # 改：MultiBlocProvider（SettingsCubit ＋
 
 ### 元件職責與邊界
 
-- **`CalcSettings`**（`engine/`）：不可變值物件，欄位 `taxRate`（`Decimal`，0–100，一位小數）、`rounding`（`RoundingMode`）、`decimalPlaces`（`int`，0／2／3／4）、`grouping`（`bool`）。`enum RoundingMode { float, cut, up, halfUp }` —— 對應 UI 標籤 `F`／`CUT`／`UP`／`5/4`（UI 顯示 5/4，code 用 `halfUp` 避免 `5-4`/`halfEven` 誤讀）。帶 `const CalcSettings.defaults()` = `5%, 5/4, 2, true`。手寫 `==`／`hashCode`。
-- **`CalculatorEngine`**：新增 private `Decimal applyRounding(Decimal)` —— **全引擎唯一的捨入出口**，所有產出結果的路徑（`_compute()`、Tax、MU）都必須經過它，讓「有沒有雙重捨入」成為一條可守住的測試。`_divisionScale` 從硬編碼 10 改為由設定推導的 guard 位。新增 `Decimal _grandTotal`、`onTaxPlus()`／`onTaxMinus()`／`onMu()`／`showGrandTotal()`。保持**零 Flutter import**（Phase 1 invariant），所以 Phase 2 全部新邏輯都能脫離 widget 單元測試。
+- **`CalcSettings`**（`engine/`）：不可變值物件，欄位 `taxRate`（`Decimal`，0–100，一位小數）、`rounding`（`RoundingMode`）、`decimalPlaces`（`int`，0／2／3／4）、`grouping`（`bool`）。`enum RoundingMode { float, cut, up, halfUp }` —— 對應 UI 標籤 `F`／`CUT`／`UP`／`5/4`（UI 顯示 5/4，code 用 `halfUp` 避免 `5-4`/`halfEven` 誤讀）。帶 `static final CalcSettings defaults` = `5%, 5/4, 2, true`（App 啟動與 Cubit 用）**與 `static final CalcSettings raw`** = `float, 不分位、不補零`（engine 自身的預設值，讓 Phase 1 那 15 條 engine 測試不動）。手寫 `==`／`hashCode`。
+  - **預設值只能是 `static final`，不能是 `const`**（2026-10-13 逐行核對 `decimal-3.2.6/lib/decimal.dart` 後修正）：`Decimal` 有 `late final Rational _rational`（line 42），因此不是 const 可構造的類型；`Decimal.zero/one/ten` 全是 `static final`（lines 75-81），`Decimal.fromInt` 是 factory。`CalcSettings` 的 const 構造函數無法定位預設實例，原本這裡寫的 `const CalcSettings.defaults()` 做不到。
+- **`CalculatorEngine`**：新增 private `Decimal applyRounding(Decimal)` —— **非除法路徑唯一的捨入出口**（`+ − ×` 與 Tax+ 的乘法結果都從這裡出去）；除法另有 `_divide()`，在它內部用真實餘數一次到位，**出來以後不得再捨第二次**。engine 的預設設定是 `CalcSettings.raw`（`F`、不分位、不補零），所以 Phase 1 的 15 條 engine 測試完全不用改。新增 `Decimal _grandTotal`、`taxPlus()`／`taxMinus()`／`mu()`／`showGrandTotal()`。保持**零 Flutter import**（Phase 1 invariant），所以 Phase 2 全部新邏輯都能脫離 widget 單元測試。
+  - **Tax／MU 的作用對象是 entry，不是 accumulator**（修正原文「只改 accumulator」的措辭）：`5 + 3 Tax+` 的預期是 `5 + 3.15 = 8.15`，若去改 `_accumulator` 會變成對 5 含稅，與商用機相反。所以 `taxPlus/taxMinus` 只覆寫 `_entry`（並 `_startNewEntry = true`），`_accumulator` 與 `_pendingOp` 不變。
+  - **`mu()` 是唯一會吃掉 `pendingOp` 的鍵**：`100 × 20 MU` 的售價本身就是這場乘法的答案，若留著 `_pendingOp = multiply`，使用者隨後按 `=` 會算成 `100 × 125`。所以 MU 完成後設 `_accumulator = 售價`、`_pendingOp = null` —— 這也正好讓 MU 的結果天然不進 GT（與「GT 真值表」一致）。
   - **MU 需要一個新狀態欄位**：第二次按 `MU` 要顯示利潤額 `= 售價 − 成本`，而此時 `_accumulator` 已經被售價覆蓋，所以成本必須另存 —— 新增 `Decimal? _muCost`，第一次 `onMu()` 時存下當時的成本，第二次讀它算利潤額。`allClear()` 與 `_pendingOp` 被重置時一併清為 `null`（否則 `AC` 後再按 `MU` 會拿到上一筆的成本）。
   - **`hasGT` 的定義是 `_grandTotal != Decimal.zero`**，不是「本-session 用過 GT」。副作用要老實記錄：一筆 `X = 0` 的計算進 GT 後總和仍是 0，indicator 不會亮起 —— 這是刻意選擇（避免多一個布爾欄位追蹤「是否曾用過」），測試要鎖住這個行為而不是當 bug 修。
 - **`SettingsRepository`**：`Future<CalcSettings> load()`（讀不到／半壞 → 回傳 `defaults()`，不拋）、`Future<void> save(CalcSettings)`。內部只存 4 個純量：`taxRate` String、`roundingModeIndex` int、`decimalPlaces` int、`grouping` bool。是 repo 內**唯一 import `shared_preferences` 的檔案**。
@@ -118,7 +121,7 @@ main.dart                          # 改：MultiBlocProvider（SettingsCubit ＋
 | `+ − × ÷` 與 `=` | **鏈捨入**：每次 `_compute()` 出口即捨入，`_accumulator` 存的當下就是捨入後的值。所以「畫面顯示什麼、下一筆就用什麼」，與 Casio 桌上型商用機一致。 |
 | `Tax+`／`Tax−`／`MU` | **一鍵功能**：中繼結果**不中途捨入**，只在最終輸出套用一次捨入。 |
 
-> 「不中途捨入」不等於「無窮精度」：`Tax−` 與 `MU` 都含除法，仍受下方「除法 guard 位」的截斷約束。措辭上 spec 不宣稱全精度，實作與測試都以 guard 位為準。
+> 「不中途捨入」不等於「無窮精度」：`Tax−` 與 `MU` 都含除法，仍受下方「除法以餘數一次性捨入」的位數約束。措辭上 spec 不宣稱全精度，實作與測試都以目標位數的單次捨入為準。
 
 ### `F` 模式與小數位鎖定的關係（**F 使小數位設定失效**）
 
@@ -126,6 +129,7 @@ Casio 的 `F`（Float）本身就是「不鎖定小數位」，所以它和 0/2/
 
 - `rounding == F` 時，`decimalPlaces` **一併忽略**：不捨入、**不補零**，顯示 raw 值（`5` 顯示 `5`，不是 `5.00`）。
 - `rounding ∈ {CUT, UP, 5/4}` 時，`decimalPlaces` 同時控制**捨入位數**與**顯示補零**。
+- 小數位鎖**不限制輸入**：輸入中的 entry 照原樣顯示（鎖 2 位時鍵入 `1.239` 顯示 `1.239`）；鎖只在**計算輸出捨入**與**補零**生效。超位輸入在下一次 `_compute()`（按 `=`，或已有待執行運算時再按運算子）出口即按當前模式捨到鎖定位數。
 - `StatusIndicator` 在 `F` 模式顯示 `F` 而**不顯示** `n位`，避免「那個控制項是死的」的困惑。
 - 設定頁不隱藏小數位選單（維持 `F` 切回 5/4 時使用者先前選的位數還在），只在 `F` 時把該列顯示為 disabled 樣式。
 
@@ -137,18 +141,33 @@ Casio 的 `F`（Float）本身就是「不鎖定小數位」，所以它和 0/2/
 
 | 模式 | 實作 | 負值 `-1.239` @ 2 位 | 說明 |
 | --- | --- | --- | --- |
-| `F`（浮動） | 不捨入，僅 `_clean` | `-1.239` | 除法 guard 位改用 `_maxDigits` = 16。 |
+| `F`（浮動） | 不捨入，僅 `_clean` | `-1.239` | 除法**維持截斷 10 位**（現有 `_divisionScale`）。原本這裡寫「改用 `_maxDigits` = 16」是混用了兩件事：`_maxDigits` 是**輸入位數上限**（`inputDigit` 用），跟除法截斷位無關；改成 16 位會直接動到 Phase 1 的回歸測試 `1 / 3 → 0.3333333333`。 |
 | `CUT` | `truncate(scale: n)` | `-1.23` | 向零捨去（已核對 `decimal.dart:250` 「q is already truncated toward zero」）。 |
-| `UP` | 符號導向 wrapper | `-1.24` | **不能直接用 `ceil(scale: n)`** —— 它是向 +∞，對負值是 `-1.23`。寫 `d.isNegative ? -(-d).ceil(scale: n) : d.ceil(scale: n)`。 |
+| `UP` | 符號導向 wrapper | `-1.24` | **不能直接用 `ceil(scale: n)`** —— 它是向 +∞，對負值是 `-1.23`。寫 `d.sign < 0 ? -(-d).ceil(scale: n) : d.ceil(scale: n)`。**`Decimal` 沒有 `isNegative`**（只有 `int get sign`，line 183；`abs()` 是方法不是 getter，line 178），原文的 `d.isNegative` 編不過。 |
 | `5/4` | `round(scale: n)` | `-1.24` | 已核對 `decimal.dart:216-231`：half **away from zero**（`-3.5 → -4`），正是商用機的 5/4，不是 banker's rounding。 |
 
-### 除法 guard 位（D2＝A）：消除雙重捨入
+### 除法：以餘數一次性捨入到目標位數（D2＝A 的實作修正）
 
-既有 `_divisionScale = 10` 是硬編碼截斷；若在其上再套一層捨入就會**捨入兩次，而兩次不等於一次**：
+D2 的**意圖**（不雙重捨入、一次落地）成立，但我原本給它的**理由與反例是錯的**，2026-10-13 逐行核對 `_divide`（`calculator_engine.dart:97-101`）後更正如下。
 
-> `1.444449` 鎖 4 位、5/4 → 直接捨入 `1.4444`；先截 5 位得 `1.44445` 再捨入 → `1.4445`。**不同。**
+原文舉的 `1.444449` 鎖 4 位 5/4 → 「先截 5 位得 `1.44445` 再捨入 → `1.4445`」**不成立**：既有 `_divide` 走的是 BigInt `~/`，那是**截斷**（`decimal.dart:151-154`），截斷永遠讓量值變小或相等，不可能把 `1.444449` 舉成 `1.44445`。而且 `5/4` 與 `CUT` 在「先截 10 位、再捨到 n 位」下**可證與直接捨入同值**（n ≤ 4 時半位界線 `H` 一定可用 10 位精確表示，`|trunc₁₀(x)| < H ⟺ |x| < H`；`CUT` 更是直接可組合）。
 
-改法：除法內部先算到 **`decimalPlaces + 6`** 位 guard（`F` 模式則 16 位），再由 `applyRounding()` 一次性落地。`_divisionScale` 不再是對外語意，只是「算夠位」的實作細節。此條由上面那組數字的回歸測試守住。
+真正會出錯的只有 **`UP`**，而且原因不是「捨了兩次」，是**截斷把「還有餘數」這個證據抹掉了**：真實商 `5.000000000001` 截到 10 位變成**恰好** `5.0000000000`，此時 `UP @ 2 位` 看到的是整數，於是不加進位，回 `5.00`；而正確答案是 `5.01`。
+
+**所以實作不用 guard 位，改成「除到目標位數並看真實餘數」**，一次搞定且嚴格比 guard better：
+
+```
+scaled = a.shift(n)                      // 仍然精確，不除
+q      = scaled ~/ b                     // BigInt，向零截斷
+r      = scaled.remainder(b)             // Decimal，符號跟 a（decimal.dart:160-163）
+negative = a.sign * b.sign < 0           // 進位方向由運算元決定，不能看 q（q 為 0 時失去符號）
+CUT   → 不進位
+UP    → r != 0 時進位
+5/4   → r.abs() * 2 >= b.abs() 時進位
+F     → 不走這條路，維持截斷 10 位
+```
+
+`_divisionScale = 10` 降格成「只在 `F` 模式下才有意義」的實作細節。此條由 `5000000000001 ÷ 1000000000000`（@2 位：`CUT`/`5/4` → `5.00`、`UP` → `5.01`）這組回歸測試守住。
 
 ### GT 真值表（D3：採 `Flutter細部功能.md` 的「= 累加」定義）
 
@@ -158,7 +177,7 @@ Casio 的 `F`（Float）本身就是「不鎖定小數位」，所以它和 0/2/
 | --- | --- |
 | `=` 完成一筆 | `GT += 結果` |
 | 立即執行的**中間值**（`2+3×4=` 裡的 `5`） | **不進 GT**，只有 `=` 的最終值進 |
-| `Tax+`／`Tax−`／`MU` 鍵 | **不直接進 GT**（只改 accumulator，之後按 `=` 才入總） |
+| `Tax+`／`Tax−`／`MU` 鍵 | **不直接進 GT**。Tax 鍵只改 entry，隨後按 `=` 時由該筆結果入總；MU 會吃掉 `pendingOp`，所以 MU 產出的售價**不會**再被 `=` 重複入總（這是刻意設計，不是漏觸發） |
 | `AC` | 清 GT |
 | `C`（clearEntry） | **不**清 GT |
 | `GT` 鍵 | 把總和帶入 `_entry` 且 `_startNewEntry = true`；**不清空**（可重複引用，再按 GT 仍是同一總和） |
@@ -170,7 +189,7 @@ Casio 的 `F`（Float）本身就是「不鎖定小數位」，所以它和 0/2/
 - `Tax+`：`A × (1 + t/100)` → 含稅價。
 - `Tax−`：`A ÷ (1 + t/100)` → 從含稅價**反推**未稅價。採此而非歐洲 cash register 的 `A − A×t`，因為台灣／日本加值型營業稅的實務用法是「客戶給含稅價，算出未稅額」：`2100` 按 Tax−（t=5%）= **2000**（減法版會錯給 1995）。PRD:12「含稅／未稅一鍵切換」描述的正是這一對互為反函數的按鍵。
 - 稅率**存在設定**（預設 5%），主鍵盤**不放**改稅率的鍵；由 `StatusIndicator` 顯示目前稅率。
-- 依 D1，Tax 鍵中繼值不在中途捨入、出口一次捨入（仍受 guard 位約束）；依 D3，不直接寫 GT。
+- 依 D1，Tax 鍵中繼值不在中途捨入、出口一次捨入（`Tax−` 的除法走餘數法，見「除法：以餘數一次性捨入到目標位數」）；依 D3，不直接寫 GT。
 - `÷ (1 + t/100)` 在 `t = −100` 時為除零 → `hasError`。設定頁把稅率限制在 **0–100%、一位小數**，從源頭排除；engine 仍保留檢查作防呆。
 
 ### MU 語意（D5＝Casio 二元按鍵）
@@ -209,7 +228,7 @@ Casio 的 `F`（Float）本身就是「不鎖定小數位」，所以它和 0/2/
                 → CalculatorEngine（_compute → applyRounding → GT 判定）
                   → emit(CalculatorState{display, hasError, hasGT})
                     → DisplayScreen.formatForDisplay(raw, settings)   ← 逗號／補零只在這層
-                    → CalcButton 矩阵
+                    → CalcButton 矩陣
 
 設定頁變更 → SettingsCubit 更新 state → fire-and-forget save()
                                     └→ BlocListener → applySettings() → engine
@@ -242,7 +261,7 @@ Tax−  1    2   3   +
 - 寬度下限變成 5 × 64 ≈ 320dp：Android 最窄常見直式螢幕（360dp）放得下，Windows 1280×720 有餘裕。
 - `StatusIndicator` 是顯示屏與鍵盤之間的**細列**（20–24dp，不是 64dp 的按鍵列），內容為 `5% ｜ 5/4 ｜ 2位 ｜ ,`；`F` 模式下第二格顯示 `F` 且**不顯示**位數格（見「`F` 模式與小數位鎖定的關係」）。
 - `⚙` 推入 `SettingsScreen` route。
-- **自適應下限**：`CalcButton` 改用 `LayoutBuilder`，最小高度 64 → **44dp**（Material 可觸碰下限）依可用高度縮放，並同步縮字級。極矮視窗只是字變小，不再出現 yellow-black overflow 條。**以此永久關掉 Phase 1 延後項 #4。**
+- **自適應下限**：`CalcButton` 改用 `LayoutBuilder`，把 `minimumSize` 的 64dp 硬下限換成**父層給的可用高度**，並依同一個高度縮放字級（`FittedBox` 收長標籤如 `Tax+`）。**注意**：44dp 是 Material 可觸碰下限，但在極矮視窗裡「保留 44dp 硬下限」與「絕不 overflow」兩者只能選一個 —— 選**不 overflow**（44dp 降為設計參考值，不是代碼裡的 clamp 下限）。極矮視窗只是字變小，不再出現 yellow-black overflow 條。**以此永久關掉 Phase 1 延後項 #4。**
 
 ## 測試計畫
 
@@ -250,7 +269,7 @@ Tax−  1    2   3   +
 
 **引擎單元測試**
 - 捨入矩陣：4 模式 × `+ − × ÷`；負值方向差異（`-1.239`：CUT→`-1.23`、UP→`-1.24`、5/4→`-1.24`、F→`-1.239`）；小數位 0／2／3／4 各一。
-- **雙重捨入照妖鏡**：`1.444449` 鎖 4 位 5/4 → `1.4444`（不是 `1.4445`）；`1/3` 鎖 2 位 × 四模式。
+- **單次捨入照妖鏡**：`5000000000001 ÷ 1000000000000`（真實商 `5.000000000001`）鎖 2 位 → `UP` 必須給 `5.01`（截斷到 10 位後再看會錯判成整數而給 `5.00`）；`CUT`／`5/4` 給 `5.00`。另測 `1/3`、`2/3` 鎖 2 位 × 四模式。
 - GT 真值表 8 條逐項（含「`=` 重複按不重複累加」與「中間值不進 GT」兩條不變項）。
 - Tax：`Tax+`／`Tax−` 互為反函數（1000 → 1050 → 1000）；t=5% 下 `2100 Tax−` → `2000`（**不是** 1995）；並驗證中繼值未在途中被捨掉（1000 Tax+ Tax− 應回到 1000，而非因中途捨入漂走）。
 - MU：`100 × 20 MU` → 125；再按 → 25；`+` 下 no-op；利潤率 100% → Error；>100% → 負值。
@@ -262,7 +281,7 @@ Tax−  1    2   3   +
 
 **資料層測試**：`SettingsRepository` round-trip（`SharedPreferences.setMockInitialValues`）；預設值；壞值退回 `defaults()`。
 
-**Widget 測試**：Phase 1 煙霧測試（`2 + 3 =` → `5`）**必須照過**；新增 indicator 渲染、`⚙` 導航到 `SettingsScreen`、`Tax+` 點擊後顯示含稅值、鎖 2 位時顯示 `5.00`、5×5 矩陣在窄高度下不 overflow（`LayoutBuilder` 驗證）。
+**Widget 測試**：Phase 1 煙霧測試（`2 + 3 =`）的斷言**要從 `5` 改成 `5.00`** —— App 預設是 `5/4`·2 位·分位 on，格式化層會補零；這是**預期的行為變更，不是回歸**，計畫裡要寫成顯明的待辦而不是留著壞測試。**所有 widget 測試都要先 `SharedPreferences.setMockInitialValues({})`**（簽名 `void setMockInitialValues(Map<String, Object> values)`，標 `@visibleForTesting`、未棄用），因為 `SettingsCubit` 在啟動即非同步 `load()`；沒有 mock 會讓 platform channel 在測試裡報 missing plugin。新增 indicator 渲染、`⚙` 導航到 `SettingsScreen`、`Tax+` 點擊後顯示含稅值、5×5 矩陣在窄高度下不 overflow（`LayoutBuilder` 驗證）。
 
 **不做**：golden／視覺回歸測試（本 repo 無 CI、無 pre-commit hook）。
 
@@ -271,7 +290,7 @@ Tax−  1    2   3   +
 本 Phase 比 Phase 1 大（Phase 1 計畫 1053 行只做骨架）。仍是**一 Phase 一計畫**，但計畫內部按此順序分段，每段結束都能 `analyze`＋`test` 乾淨通過：
 
 1. **A 段｜設定基礎**：`CalcSettings`/`RoundingMode`、`SettingsRepository`＋`shared_preferences`、`SettingsCubit`、`SettingsScreen`、`main.dart` 改 `MultiBlocProvider`。此段結束時設定可存可取，但還沒影響計算。
-2. **B 段｜引擎語意**：`applyRounding`（四模式＋guard 位）、GT、Tax、MU、`±` 修正、`CalculatorState.==`。**全部先寫測試再實作**（TDD），因為這段是全 Phase 風險集中處。
+2. **B 段｜引擎語意**：engine 注入 `CalcSettings.raw`、`applyRounding`（四模式）、餘數法 `_divide`、GT、Tax、MU、`±` 修正、`CalculatorState.==`。**全部先寫測試再實作**（TDD），因為這段是全 Phase 風險集中處。
 3. **C 段｜UI**：5×5 鍵盤、`StatusIndicator`、`CalcButton` 自適應高度、`number_format` 千分位與補零接上 `DisplayScreen`。
 
 A→B→C 的依賴是單向的：B 只依賴 `engine/calc_settings.dart`（A 段產出的型別），C 只讀 state 與 settings。段與段之間不平行動工，避免 engine 和 UI 同時改導致測試難歸因。
@@ -303,7 +322,7 @@ flutter build apk        # plugin 的 Android 端要能編（第一次有 plugin
 
 | Phase 1 延後項 | Phase 2 處置 |
 | --- | --- |
-| `CalculatorState` 無 `==`／`hashCode` | **收掉**：手寫（欄位增加到 3 個，no-op 重繪代價变大，此刻做價值更高）。**不加 `equatable`**。 |
+| `CalculatorState` 無 `==`／`hashCode` | **收掉**：手寫（欄位增加到 3 個，no-op 重繪代價變大，此刻做價值更高）。**不加 `equatable`**。 |
 | `±` 在 `A <op> ± =` 退化路徑的符號歧義 | **收掉**：先寫 ± 真值表＋測試，再依「只作用於 entry、回溯不到 accumulator」的新規則實作。 |
 | 引擎邊界未測（`maxDigits`、負值／尾點退格、運算子重按、trunc-vs-round） | **收掉**：與捨入測試同輪寫。 |
 | `CalcButton` 64×5 列 ≈ 516dp overflow 隱患 | **收掉**：5×5 佈局不增加列數 ＋ `LayoutBuilder` 44dp 自適應下限。 |
@@ -313,4 +332,9 @@ flutter build apk        # plugin 的 Android 端要能編（第一次有 plugin
 - **M1–M3 多組獨立記憶體從「未排入任何 Phase」移入 Phase 3**（原本它出現在 PRD:23 卻不在四期路線圖任何一處，屬孤兒需求）。Phase 3 已有歷史紙帶＋本地儲存的工作量，記憶體與之共享同一持久化決策最省。需同步改 AGENTS.md 路線圖。
 - `SettingsRepository` 是 `shared_preferences` 唯一接觸點；Phase 3 引入記錄儲存（`hive_ce`／Isar）時**不要把設定遷過去**（層級不同，見「依賴政策」）。
 - Phase 3 紙帶要記錄「捨入後的值」—— 因 D1 鏈捨入，`_entry`／`_accumulator` 已是機台語意的最終值，直接記錄即可，不需回溯未捨入的中間值；但 Tax／MU 的中間值若要進紙帶，需要一組新的 debug 級資料，屆時再評估。
-- 擬真主題（Phase 4）會需要第二套 `ThemeData` 與橫式展開按鍵；Phase 2 的 5×5 矩陣是它的基础，不要預先抽兩套佈局。
+- 擬真主題（Phase 4）會需要第二套 `ThemeData` 與橫式展開按鍵；Phase 2 的 5×5 矩陣是它的基礎，不要預先抽兩套佈局。
+
+## 修訂紀錄
+
+- **2026-10-13（commit `49ed46d` 之後、寫實作計畫前的校稿）**：逐行核對 `decimal-3.2.6/lib/decimal.dart` 與既有 `_divide` 後，改掉四處會誤導實作的內容 —— ① `Decimal` 沒有 `isNegative`，UP wrapper 改用 `d.sign < 0`；② `CalcSettings` 預設值無法 `const`，改 `static final` 並新增 `raw`（engine 預設，讓 Phase 1 的 15 條 engine 測試不動）；③ D2 的反例 `1.444449` 不成立（`_divide` 是截斷，不是捨入），guard 位方案換成**餘數法除到目標位數**，真正會被救回的是 `UP` 在「餘數落在第 11 位之後」的 case；④ `F` 模式除法維持截斷 10 位（原寫 16 位會弄壞 Phase 1 回歸測試，且把 `_maxDigits`（輸入位數上限）跟除法截斷位混為一談）；⑤ Tax/MU 的作用對象是 entry 而非 accumulator，MU 必須吃掉 `pendingOp`；⑥ widget 霧霧測試斷言 `5` → `5.00` 屬預期行為變更、且需 `SharedPreferences.setMockInitialValues`；⑦ `CalcButton` 的 44dp 與「不 overflow」衝突時選後者。
+- **2026-10-13（合併前 final review 修正）**：原顯示層「超過設定位數只截顯示」的前提「engine 已先捨入」不成立 —— engine 從不捨入輸入。裁定改為「**輸入不受鎖、照原樣顯示**」（貼合「`decimalPlaces` 同時控制捨入位數與顯示補零」與商用機輸入暫存器語意）；移除 `formatForDisplay` 的截斷分支。不採「輸入端裁切」方案：會與本節測試計畫的捨入矩陣（對鎖定引擎輸入 `1.234`／`1.239`）衝突。
