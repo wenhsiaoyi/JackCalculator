@@ -19,7 +19,7 @@ class CalcButton extends StatelessWidget {
   final CalcButtonVariant variant;
   final CalcButtonShape shape;
 
-  /// 字級 = 字高基準 × fontScale（行動版面 v2：主鍵 0.60、面板鍵 0.34）。
+  /// 字級 = 字高基準 × fontScale（行動版面 v2：主鍵 0.60、面板鍵 0.44）。
   /// 圓形的字高基準是整格高（維持 v2 前比例）；膠囊的字高基準是膠囊視覺高。
   /// 外層 FittedBox(scaleDown) 保證窄窗不 overflow。
   final double fontScale;
@@ -46,12 +46,14 @@ class CalcButton extends StatelessWidget {
           final maxW = constraints.maxWidth;
           final maxH =
               constraints.maxHeight.isFinite ? constraints.maxHeight : 64.0;
-          // 膠囊高設上限 0.62×欄寬（量自參考圖 130/210），否則列高 ≥ 欄寬時
-          // StadiumBorder 會退化成圓。觸控範圍維持整格（L2），視覺縮小為已知項。
+          // 膠囊高上限 0.80×欄寬：0.62（量自參考圖）在手機上讓面板鍵只有 48dp 高、
+          // 不敷觸控；提到 0.80 後圓鍵僅縮 3.4dp，換得面板鍵 62.6dp。
+          // 仍必須 < 欄寬，否則列高 ≥ 欄寬時 StadiumBorder 會退化成圓。
+          // 觸控範圍維持整格（L2），視覺縮小為已知項。
           final double visualH = switch (shape) {
             CalcButtonShape.circle => maxW < maxH ? maxW : maxH,
             CalcButtonShape.capsule =>
-              maxW * 0.62 < maxH ? maxW * 0.62 : maxH,
+              maxW * 0.80 < maxH ? maxW * 0.80 : maxH,
           };
           final fontSize =
               (shape == CalcButtonShape.circle ? maxH : visualH) * fontScale;

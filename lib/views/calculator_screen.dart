@@ -79,16 +79,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             _row([
                               _btn('GT', cubit.onGrandTotal,
                                   CalcButtonVariant.function,
-                                  fontScale: 0.34),
+                                  fontScale: 0.44),
                               _btn('MU', cubit.onMu,
                                   CalcButtonVariant.function,
-                                  fontScale: 0.34),
+                                  fontScale: 0.44),
                               _btn('Tax+', cubit.onTaxPlus,
                                   CalcButtonVariant.function,
-                                  fontScale: 0.34),
+                                  fontScale: 0.44),
                               _btn('Tax−', cubit.onTaxMinus,
                                   CalcButtonVariant.function,
-                                  fontScale: 0.34),
+                                  fontScale: 0.44),
                             ]),
                           _row([
                             _btn('AC', cubit.allClear,
@@ -179,14 +179,14 @@ class _AdvancedToggle extends StatelessWidget {
       key: const Key('advancedToggle'),
       onTap: onTap,
       child: SizedBox(
-        height: 28,
+        height: 48,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.expand_less,
-                size: 12, color: scheme.onSurfaceVariant),
+                size: 18, color: scheme.onSurfaceVariant),
             Icon(Icons.expand_more,
-                size: 12, color: scheme.onSurfaceVariant),
+                size: 18, color: scheme.onSurfaceVariant),
           ],
         ),
       ),

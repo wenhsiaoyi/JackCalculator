@@ -303,4 +303,61 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('livePreview')), findsNothing);
   });
+
+  testWidgets('chevron 開關觸控高 ≥ 48dp', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+
+    final height =
+        tester.getSize(find.byKey(const Key('advancedToggle'))).height;
+    expect(height, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets('膠囊視覺高 ≥ 0.75×欄寬', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 100,
+            height: 90,
+            child: CalcButton(
+              label: 'GT',
+              onPressed: () {},
+              variant: CalcButtonVariant.function,
+              shape: CalcButtonShape.capsule,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final box = find.descendant(
+      of: find.byType(CalcButton),
+      matching: find.byType(DecoratedBox),
+    );
+    final decoration =
+        tester.widget<DecoratedBox>(box).decoration as BoxDecoration;
+    final size = tester.getSize(box);
+    expect(decoration.borderRadius, isNotNull);
+    expect(size.height, greaterThanOrEqualTo(0.75 * 92));
+  });
+
+  testWidgets('手機寬展開態：面板鍵字級 ≥ 22dp', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(361, 794);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const JackCalculator());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('advancedToggle')));
+    await tester.pump();
+
+    final gt = tester.widget<Text>(find.descendant(
+      of: find.byType(CalcButton),
+      matching: find.text('GT'),
+    ));
+    expect(gt.style!.fontSize, greaterThanOrEqualTo(22));
+  });
 }
