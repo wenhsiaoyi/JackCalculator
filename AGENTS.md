@@ -128,7 +128,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 
 `graft/` 是本機快取，**已由 graft 自動寫進 `.gitignore`，不進版控** —— 沒有它的環境（例如同事）graph 是空的，要自己跑 `graft build`。MCP 設定在全域 `~/.config/opencode/opencode.jsonc`，repo 內不需要任何 graft 設定。
 
-- **`graft build` 會在寫完圖之後才 OOM 崩潰、exit code 1，但圖其實是完整的。** 判斷成功與重要看 `graft map` / `graft check` 有沒有正常輸出，不要看 exit code。
+- **`graft build` 會在寫完圖之後才 OOM 當機、exit code 1，但圖其實是完整的。** 判斷成功與重要看 `graft map` / `graft check` 有沒有正常輸出，不要看 exit code。
 - **`graft build` 還會另外生成一個 `.ignore`**（內容為 `!graft/` 加排除 `graft/.cache/`、`graft/.graph/`），企圖讓 ripgrep 連生成卡片一起搜得到。**本 repo 看到就刪掉**，否則 `grep` 會開始命中 `graft/**/*.md` 這些衍生物。
   - `.ignore` **已經加進 `.gitignore` 了，但那只擋住 `git status`** —— 純粹是「忘記刪時別弄髒工作區」的保險，**擋不住 ripgrep**。ripgrep 讀 `.ignore` 是無條件的、不看 git 狀態，而 `.ignore` 裡的 `!graft/` 優先序高於 `.gitignore` 的 `graft/`。實測：`.gitignore` 有 `graft/` 時 grep 不命中 `graft/`；生成 `.ignore` 後命中；**再把 `.ignore` 加進 `.gitignore` 後照樣命中**
   - 所以**兩個動作缺一不可**：靠 `.gitignore` 讓 git 乾淨，靠刪檔讓 grep 乾淨。而 `graft build` 每次都會再生一個，所以刪檔這件事需要反覆做
@@ -142,7 +142,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - **Phase 1（已完成，branch `feat/phase1-calculator`）**：Cubit + `decimal` 零誤差四則運算 + Material 3 現代簡約 UI + App 名稱。
 - **Phase 2（已完成，branch `feat/phase2-commercial-core`，設計 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`）**：GT、Tax+/Tax-、MU、F/CUT/UP/5-4 捨入 + 小數位鎖定、**千分位（僅國際分位）**、設定頁 + `shared_preferences` 持久化。同時已收掉下方四項 Phase 1 延後項。
 - **行動裝置版面（已完成，branch `feat/mobile-layout`，2026-10-14）**：手機優先版面重排 —— 標準 4 欄盤＋chevron 面板收 GT／MU／Tax±、⚙ 進顯示區頂列、桌機整欄置中限寬 420dp。設計 `docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`、計畫 `docs/superpowers/plans/2026-10-14-jack-calculator-mobile-layout.md`。**v2（branch `feat/mobile-layout-v2`，2026-10-18）**：圓形鍵＋膠囊面板重排 —— 4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）、chevron 無文字雙箭頭展開膠囊面板收 GT／MU／Tax±（預設收起、展開時全盤轉膠囊並壓縮）。設計 `docs/superpowers/specs/2026-10-18-jack-calculator-mobile-layout-v2-design.md`、計畫 `docs/superpowers/plans/2026-10-18-jack-calculator-mobile-layout-v2.md`。
-- **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本地儲存（**只能用 `hive_ce`，`hive` 在本專案裝不了**，見下方「依賴政策」）+ **M1–M3 多組記憶體**（原 PRD:23 有列卻不在任何 Phase，2026-10-13 裁定移入這裡）+ 匯出（pdf/csv/share_plus）。
+- **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本機儲存（**只能用 `hive_ce`，`hive` 在本專案裝不了**，見下方「依賴政策」）+ **M1–M3 多組記憶體**（原 PRD:23 有列卻不在任何 Phase，2026-10-13 裁定移入這裡）+ 匯出（pdf/csv/share_plus）。
 - **Phase 4（未開工）**：音效/震動回饋、擬真桌上型主題（第二套 `ThemeData`）、橫式展開進階按鍵、行動版面的展開動畫與視覺皮膚。
 
 **每個 Phase 各走一輪 brainstorming→spec→plan→實作。** Phase 1 的四項延後項**已由 Phase 2 收掉**（對帳表在 Phase 2 spec 的「Phase 1 延後項對帳」節）。
@@ -153,7 +153,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - 引擎邊界未測：`maxDigits` 上限、負值/尾點退格、運算子重按、trunc-vs-round。→ 落地：`test/sign_and_bounds_test.dart` 13 條 ＋ `test/calculator_engine_test.dart` 追加的 regression group。
 - `CalcButton` 最小高 64×5 列 ≈ 516dp 下限，極矮/橫向視窗會 overflow（Windows 預設 1280×720 有餘裕）。→ 落地：`lib/views/components/calc_button.dart` 的 `LayoutBuilder` 自適應高度（「5 欄 × **維持 5 列**」佈局；另 `calculator_screen.dart` 對 StatusIndicator 加了寬度防護）。
 
-## 依賴政策（2026-10-13 Phase 2 定案，取代原本「只 flutter_bloc+decimal」的默規）
+## 依賴政策（2026-10-13 Phase 2 定案，取代原本「只 flutter_bloc+decimal」的預設慣例）
 
 一階依賴僅限**同時**滿足以下三者的套件：
 
@@ -173,3 +173,13 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - `shared_preferences` 2.5.6 單看自身宣告 `flutter >=3.41.0`，但計入其依賴閉包後 `pubspec.lock` 的 `sdks:` 節實際解析下限是 **`flutter >=3.44.0`**（本機 3.47.7 ✅），宣告 android/ios/linux/windows 四平台 —— 正好是本專案的四個目標。它是專案**第一個 plugin**，Android 端多出 Gradle plugin 專案，`flutter build apk` 已重驗通過。
 - **不要用 `intl` 的 `NumberFormat` 做千分位**：`intl` 雖已是 transitive，但 locale grouping ≠ 商用機的「千分位開關」（部分 locale 用空格分隔），會引來與需求無關的行為差異。`lib/core/number_format.dart` 手寫即可。
 - `shared_preferences` 2.5.6 已於 Phase 2 引入，為本專案第一個 plugin。
+
+## 中文用語規範（台灣正體）
+
+本專案所有中文輸出一律採用**台灣正體中文用語**，不得混入中國大陸用語。適用範圍涵蓋開發過程會產出中文的所有地方：文件（`docs/`、`specs/`、`AGENTS.md` 等）、程式碼註解與字串、UI 文字、commit 訊息。
+
+- **詞彙來源**：`.agents/skills/tw-translate/data/taiwan-terms.csv`（中國用語 → 台灣用語對照）與 `data/glossary.csv`（WordPress 台灣社群詞彙表）；完整用法見 `tw-translate` skill。
+- **常用對照**（詳見詞彙表）：檔案（非文件）、程式（非程序）、資料（非數據）、伺服器、網路、快取、演算法、函式、變數、字串、介面、預設（非默認）、本機（非本地）、當機（非崩潰）、連結、使用者、匯出／匯入、載入、列印。
+- **標點**：使用全形標點（，。、；：「」）；中英文之間加半形空格；程式碼、路徑、指令內的符號維持半形。
+- **專有名詞**：品牌與技術名詞保留英文（Flutter、Gradle、Windows…）。
+- **檢查方式**：用 `grep` 掃詞彙表的 `cn` 欄，或使用 `tw-translate` skill 的 `scripts/lookup.py`、`scripts/search.py`。注意本節的對照清單與說明本身即含被禁詞，掃描時須人工判讀（台灣的「文件」指 document，與詞彙表標的 file 語境不同，不算違規）。
