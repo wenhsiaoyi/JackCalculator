@@ -343,6 +343,31 @@ void main() {
     expect(size.height, greaterThanOrEqualTo(0.75 * 92));
   });
 
+  testWidgets('觸控區撐滿整格（含 4dp 鍵距，相鄰鍵零死區）', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 100,
+            height: 90,
+            child: CalcButton(
+              label: 'GT',
+              onPressed: () {},
+              variant: CalcButtonVariant.function,
+              shape: CalcButtonShape.capsule,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final ink = find.descendant(
+      of: find.byType(CalcButton),
+      matching: find.byType(InkWell),
+    );
+    expect(tester.getSize(ink), const Size(100, 90));
+  });
+
   testWidgets('手機寬展開態：面板鍵字級 ≥ 22dp', (tester) async {
     SharedPreferences.setMockInitialValues({});
     tester.view.physicalSize = const Size(361, 794);
