@@ -5,6 +5,8 @@ import 'package:jack_calculator/views/components/calc_button.dart';
 import 'package:jack_calculator/views/components/display_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'helpers/pump_app.dart';
+
 void main() {
   testWidgets('computes 2 + 3 = 5', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -37,9 +39,7 @@ void main() {
   });
 
   testWidgets('indicator 顯示目前設定', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const JackCalculator());
-    await tester.pumpAndSettle();
+    await pumpApp(tester, locales: const [Locale('zh', 'TW')]);
 
     expect(tester.widget<Text>(find.byKey(const Key('indTax'))).data, '5%');
     expect(tester.widget<Text>(find.byKey(const Key('indRounding'))).data, '5/4');
@@ -109,9 +109,7 @@ void main() {
   });
 
   testWidgets('⚙ 導航到設定頁', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const JackCalculator());
-    await tester.pumpAndSettle();
+    await pumpApp(tester, locales: const [Locale('zh', 'TW')]);
 
     await tester.tap(find.byKey(const Key('openSettings')));
     await tester.pumpAndSettle();
@@ -384,5 +382,24 @@ void main() {
       matching: find.text('GT'),
     ));
     expect(gt.style!.fontSize, greaterThanOrEqualTo(22));
+  });
+
+  testWidgets('預設跟隨系統：zh-TW 裝置顯示繁中 indicator', (tester) async {
+    await pumpApp(tester, locales: const [Locale('zh', 'TW')]);
+    expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2位');
+  });
+
+  testWidgets('預設跟隨系統：en 裝置也是同一套符號按鍵', (tester) async {
+    await pumpApp(tester, locales: const [Locale('en')]);
+    for (final label in ['AC', 'C', '⌫', '÷', '=']) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+    expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2位');
+  });
+
+  testWidgets('未識別語系退回 english 渲染', (tester) async {
+    await pumpApp(tester, locales: const [Locale('ja', 'JP')]);
+    // AppStrings 目錄還沒接進視圖（Task 7），此處只驗解析不炸、按鍵仍在。
+    expect(find.text('AC'), findsOneWidget);
   });
 }
