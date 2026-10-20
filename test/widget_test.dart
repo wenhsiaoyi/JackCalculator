@@ -398,6 +398,9 @@ void main() {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2 dp');
+    // 分隔符同样是目錄產物：三處來自預設設定（halfUp、2 位、千分位開）。
+    // 千分位關掉或切到 F 就會變少，別把這個數字照抄進其他測試（R15）。
+    expect(find.text('   |   '), findsNWidgets(3));
   });
 
   testWidgets('未識別語系退回 english 渲染', (tester) async {
@@ -457,7 +460,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // 光是「不拋異常」抓不到 D7 回歸：沒包 SingleChildScrollView 時按鈕會被夾成 361dp
-    // 並換行長高、不拋overflow，測試照樣綠。這一條才是真的鎖住可捲動（R14）。
+    // 並換行長高、不拋 overflow，測試照樣綠。這一條才是真的鎖住可捲動（R14）。
     expect(tester.getRect(find.byKey(const Key('languagePicker'))).width,
         greaterThan(361));
     expect(find.text('跟隨系統'), findsOneWidget);
@@ -558,5 +561,6 @@ void main() {
   testWidgets('簡體 indicator 同繁中後綴、分隔符不變', (tester) async {
     await pumpApp(tester, locales: const [Locale('zh', 'CN')]);
     expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2位');
+    expect(find.text('  ｜  '), findsNWidgets(3));
   });
 }
