@@ -456,6 +456,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    // 光是「不拋異常」抓不到 D7 回歸：沒包 SingleChildScrollView 時按鈕會被夾成 361dp
+    // 並換行長高、不拋overflow，測試照樣綠。這一條才是真的鎖住可捲動（R14）。
+    expect(tester.getRect(find.byKey(const Key('languagePicker'))).width,
+        greaterThan(361));
     expect(find.text('跟隨系統'), findsOneWidget);
   });
 
