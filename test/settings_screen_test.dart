@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jack_calculator/bloc/language_cubit.dart';
 import 'package:jack_calculator/bloc/settings_cubit.dart';
 import 'package:jack_calculator/data/settings_repository.dart';
 import 'package:jack_calculator/engine/calc_settings.dart';
@@ -17,6 +18,15 @@ const _harnessDelegates = <LocalizationsDelegate<dynamic>>[
   GlobalWidgetsLocalizations.delegate,
   GlobalCupertinoLocalizations.delegate,
 ];
+
+/// Task 8 起設定頁有語言選單，需要 `LanguageCubit`；隔離 harness 跟 `lib/main.dart`
+/// 一樣要供這個 provider，否則 `BlocBuilder<LanguageCubit, AppLocale?>` 會拋
+/// `ProviderNotFoundException`。
+BlocProvider<LanguageCubit> _languageProvider() {
+  final cubit = LanguageCubit(const SettingsRepository());
+  addTearDown(cubit.close);
+  return BlocProvider.value(value: cubit);
+}
 
 void main() {
   test('parseTaxRate 只接受 0–100、最多一位小數', () {
@@ -36,8 +46,8 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: cubit,
+      MultiBlocProvider(
+        providers: [BlocProvider.value(value: cubit), _languageProvider()],
         child: const MaterialApp(home: SettingsScreen()),
       ),
     );
@@ -63,8 +73,8 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: cubit,
+      MultiBlocProvider(
+        providers: [BlocProvider.value(value: cubit), _languageProvider()],
         child: MaterialApp(
           locale: const Locale.fromSubtags(
             languageCode: 'zh',
@@ -96,8 +106,8 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: cubit,
+      MultiBlocProvider(
+        providers: [BlocProvider.value(value: cubit), _languageProvider()],
         child: MaterialApp(
           locale: const Locale.fromSubtags(
             languageCode: 'zh',
@@ -124,8 +134,8 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: cubit,
+      MultiBlocProvider(
+        providers: [BlocProvider.value(value: cubit), _languageProvider()],
         child: MaterialApp(
           locale: const Locale('en'),
           supportedLocales: const <Locale>[

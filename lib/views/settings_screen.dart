@@ -2,7 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../bloc/language_cubit.dart';
 import '../bloc/settings_cubit.dart';
+import '../core/app_locale.dart';
 import '../core/app_strings.dart';
 import '../engine/calc_settings.dart';
 
@@ -114,6 +116,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text(strings.grouping),
                 value: settings.grouping,
                 onChanged: cubit.setGrouping,
+              ),
+              const SizedBox(height: 24),
+              Text(strings.languageLabel),
+              const SizedBox(height: 8),
+              BlocBuilder<LanguageCubit, AppLocale?>(
+                // Flutter 3.47.7 的 `SegmentedButton` 沒有 `scrollable` 參數，
+                // 外層包橫向 SingleChildScrollView 以滿足 spec D7（361dp 可捲動）。
+                builder: (context, selected) => SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<AppLocale?>(
+                    key: const Key('languagePicker'),
+                    segments: [
+                      ButtonSegment(
+                          value: null, label: Text(strings.languageSystem)),
+                      const ButtonSegment(
+                          value: AppLocale.english,
+                          label: Text(AppStrings.languageEnglish)),
+                      const ButtonSegment(
+                          value: AppLocale.traditional,
+                          label: Text(AppStrings.languageTraditional)),
+                      const ButtonSegment(
+                          value: AppLocale.simplified,
+                          label: Text(AppStrings.languageSimplified)),
+                    ],
+                    selected: {selected},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) => context
+                        .read<LanguageCubit>()
+                        .setLanguage(selection.first),
+                  ),
+                ),
               ),
             ],
           );

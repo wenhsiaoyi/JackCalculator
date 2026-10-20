@@ -1,5 +1,4 @@
-import 'dart:ui' show Locale;
-
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jack_calculator/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +15,8 @@ Future<void> pumpApp(
     tester.platformDispatcher.localesTestValue = locales;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
   }
+  // 同測試內重複呼叫要重新冷開機：const 根 Widget 相同會被框架短路、不重建樹。
+  await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpWidget(const JackCalculator());
   await tester.pumpAndSettle();
 }
