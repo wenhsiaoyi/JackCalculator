@@ -13,7 +13,8 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 - Android SDK 在 `E:\Android\Sdk`，現況已足夠建置：platforms **android-33 / android-36**、build-tools **33.0.2 / 36.0.0**、ndk **28.2.13676358**、cmdline-tools **23.0.0**（新版 Android CLI，套件名用斜線格式）、emulator 37.2.12、system-images android-36
 - **開發工具快取全部在 E:，不要寫回 C:** `GRADLE_USER_HOME=E:\gradle-home`、`PUB_CACHE=E:\pub-cache`（使用者層級環境變數）。Gradle wrapper 指定的 **Gradle 9.3.1 已手動安裝**在 `E:\gradle-home\wrapper\dists\`，見下方「Gradle distribution 下載」
 - **`C:\tools\Android` 那套 30.30 GB 的舊 Android SDK 已於 2026-10-13 刪除**，見下方「環境變更」
-- 無 codegen（未引入 build_runner）、**目前唯一第三方 plugin 為 `shared_preferences`**；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
+- 無 codegen（未引入 build_runner）、**目前唯一第三方 plugin 為 `shared_preferences`**；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`、`flutter_localizations`（**SDK 套件，`sdk: flutter`，不是 plugin、不進 pub.dev**；2026-10-20 多國語系一輪引入）（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族）。**`intl 0.20.3` 在 `pubspec.lock` 仍是 `dependency: transitive`、`pubspec.yaml` 未宣告、也不用於千分位** —— `flutter_localizations` 能在不宣告 `intl` 的前提下解析成功（實測：`pub get`／`analyze`／`test`／雙平台 build 全過，`pubspec.yaml` 與 `pubspec.lock` 在本輪零變動）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
+- **測試基線：180 條全綠**（2026-10-20 多國語系一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
 - **沒有 CI**（無 `.github/`、無 pre-commit hook）。驗證只能靠本機指令
 
 ## 指令
@@ -21,7 +22,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 ```powershell
 flutter pub get
 flutter analyze          # lint；設定於 analysis_options.yaml（flutter_lints 6.0）
-flutter test             # 全部測試（目前 142 個）
+flutter test             # 全部測試（目前 180 個）
 flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
@@ -30,6 +31,8 @@ flutter build apk        # 可用；預設產 release APK（本專案加了第�
 ```
 
 **改完 code 的標準檢查順序：`flutter analyze` → `flutter test`。** 兩者目前都是乾淨通過。
+
+**APK 體積對帳（spec D12）**：多國語系一輪（引入 `flutter_localizations`）後 `flutter build apk` 實測 `√ Built build\app\outputs\flutter-apk\app-release.apk (47.9MB)`，精確大小 50,212,142 bytes = **47.89 MiB**，對 47.1 MiB 基線的增量為 **+0.79 MiB**（`flutter_localizations` 帶入所有 locale 的 Material 翻譯碼，後續 Phase 引 SDK 內建套件時以此為參考代價）。
 
 ## 環境變更（2026-10-13 磁碟清理）
 
@@ -104,6 +107,8 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - Windows：**視窗標題**在 `windows/runner/main.cpp:30` 用 **純 ASCII 萬式** `window.Create(L"Jack\u8A08\u7B97\u6A5F", ...)`（計=U+8A08 算=U+7B97 機=U+6A5F），**不是**中文字面字 —— 因為 MSVC 在 Big5(950) code page 下會把 raw UTF-8 中文當錯誤（C4819→C2220）使 `flutter build windows` 失敗；runtime 標題顯示仍是「Jack計算機」。`windows/runner/Runner.rc` 的中文字彙 exe 中繼資料可行，因為它已有 `#pragma code_page(65001)`（但無 BOM 且 block 仍宣告 codepage 1252，尚未處理）
 - Linux：`linux/runner/my_application.cc` 的 `gtk_header_bar_set_title` 與 `gtk_window_set_title` **兩處**均已設為 `"Jack計算機"`（gcc/clang 預設 UTF-8，不需 escape；但 Linux 本機建不了，未實測）
 
+**多國語系一輪之後（2026-10-20）**：只有 Dart 側 `MaterialApp.title`（`lib/main.dart`，值取自 `AppStrings.appTitle`）會隨語系變動（繁中「Jack計算機」／簡中「Jack计算器」／英文 "Jack Calculator"）；**原生啟動器與視窗標題恆為「Jack計算機」** —— Android `android:label`、iOS `CFBundleDisplayName`、Windows 視窗標題、Linux GTK 標題四者都不變（OUT 定案：原生名稱不在地化）。
+
 ### Android release 簽章還是 debug key
 `android/app/build.gradle.kts` 的 release `signingConfig` 指向 debug（模板 TODO 未處理）。不能直接產出可發佈的 APK。
 
@@ -142,6 +147,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - **Phase 1（已完成，branch `feat/phase1-calculator`）**：Cubit + `decimal` 零誤差四則運算 + Material 3 現代簡約 UI + App 名稱。
 - **Phase 2（已完成，branch `feat/phase2-commercial-core`，設計 `docs/superpowers/specs/2026-10-13-jack-calculator-phase2-design.md`）**：GT、Tax+/Tax-、MU、F/CUT/UP/5-4 捨入 + 小數位鎖定、**千分位（僅國際分位）**、設定頁 + `shared_preferences` 持久化。同時已收掉下方四項 Phase 1 延後項。
 - **行動裝置版面（已完成，branch `feat/mobile-layout`，2026-10-14）**：手機優先版面重排 —— 標準 4 欄盤＋chevron 面板收 GT／MU／Tax±、⚙ 進顯示區頂列、桌機整欄置中限寬 420dp。設計 `docs/superpowers/specs/2026-10-13-jack-calculator-mobile-layout-design.md`、計畫 `docs/superpowers/plans/2026-10-14-jack-calculator-mobile-layout.md`。**v2（branch `feat/mobile-layout-v2`，2026-10-18）**：圓形鍵＋膠囊面板重排 —— 4 欄圓形鍵基本盤（頂列 AC C ± ÷、底列 0 . ⌫ =）、chevron 無文字雙箭頭展開膠囊面板收 GT／MU／Tax±（預設收起、展開時全盤轉膠囊並壓縮）。設計 `docs/superpowers/specs/2026-10-18-jack-calculator-mobile-layout-v2-design.md`、計畫 `docs/superpowers/plans/2026-10-18-jack-calculator-mobile-layout-v2.md`。
+- **多國語系（已完成，branch `feat/i18n`，2026-10-20）**：不屬於任何既有 Phase 的**獨立一輪** —— 三語（繁中／簡中／英文）`AppLocale` 解析 ＋ 手寫 `AppStrings` 目錄 ＋ `LanguageCubit`（`null`＝跟隨系統）＋ `flutter_localizations` delegates ＋ 設定頁語言選單（`SegmentedButton` 外包 `SingleChildScrollView`）＋ indicator 位數後綴／分隔符取自目錄；按鍵、顯示屏數字、`Error`、`GT` 徽章刻意**不在地化**。設計 `docs/superpowers/specs/2026-10-20-jack-calculator-i18n-design.md`、計畫 `docs/superpowers/plans/2026-10-20-jack-calculator-i18n.md`。**之後 Phase 3 新增字串一律走 `AppStrings`**（三語同 key 不得為 null、不得與英文佔位相同，已有完整性測試守著）；**超過 40 條時重新評估 `gen-l10n`**（本輪已在 OUT 記一筆）。
 - **Phase 3（未開工）**：歷史紙帶（Paper Tape）+ 本機儲存（**只能用 `hive_ce`，`hive` 在本專案裝不了**，見下方「依賴政策」）+ **M1–M3 多組記憶體**（原 PRD:23 有列卻不在任何 Phase，2026-10-13 裁定移入這裡）+ 匯出（pdf/csv/share_plus）。
 - **Phase 4（未開工）**：音效/震動回饋、擬真桌上型主題（第二套 `ThemeData`）、橫式展開進階按鍵、行動版面的展開動畫與視覺皮膚。
 
@@ -183,3 +189,4 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **標點**：使用全形標點（，。、；：「」）；中英文之間加半形空格；程式碼、路徑、指令內的符號維持半形。
 - **專有名詞**：品牌與技術名詞保留英文（Flutter、Gradle、Windows…）。
 - **檢查方式**：用 `grep` 掃詞彙表的 `cn` 欄，或使用 `tw-translate` skill 的 `scripts/lookup.py`、`scripts/search.py`。注意本節的對照清單與說明本身即含被禁詞，掃描時須人工判讀（台灣的「文件」指 document，與詞彙表標的 file 語境不同，不算違規）。
+- **zh-Hans 豁免（2026-10-20 裁定）**：該規範管開發產出（文件、註解、commit）與繁體 UI；`lib/core/app_strings.dart` 的 zh-Hans 欄與對應測試期望值是道地大陸用語，掃詞彙表 `cn` 欄時跳過該檔簡體欄。
