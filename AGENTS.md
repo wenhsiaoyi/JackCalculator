@@ -177,7 +177,7 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 
 - **`hive` 2.2.3 不可用**：pubspec 限制 `sdk: >=2.12.0 <3.0.0`，Dart 3 會被 pub 拒絕解析（結論出自 metadata，未做 live resolve；workspace 外的 `dart pub get` 探測會被權限擋掉）。要 box 就用 `hive_ce`（2.20.2，`^3.4.0`，純 Dart、零 plugin）。
 - `shared_preferences` 2.5.6 單看自身宣告 `flutter >=3.41.0`，但計入其依賴閉包後 `pubspec.lock` 的 `sdks:` 節實際解析下限是 **`flutter >=3.44.0`**（本機 3.47.7 ✅），宣告 android/ios/linux/windows 四平台 —— 正好是本專案的四個目標。它是專案**第一個 plugin**，Android 端多出 Gradle plugin 專案，`flutter build apk` 已重驗通過。
-- **`flutter_localizations`（2026-10-20 多國語系一輪引入）**：Flutter 官方 **SDK 套件**（`sdk: flutter` 從 Flutter SDK 取，**不進 pub.dev**）、純 Dart、**不是 plugin**、四平台皆可建置、不需 codegen —— 三項准入條件全過。它 pin `intl: ^0.20.3` 讓 `intl` 成為 transitive，但**刻意不在 `pubspec.yaml` 宣告** `intl`（下一條禁的是拿 `NumberFormat` 做千分位，不是套件存在）。
+- **`flutter_localizations`（2026-10-20 多國語系一輪引入）**：Flutter 官方 **SDK 套件**（`sdk: flutter` 從 Flutter SDK 取，**不進 pub.dev**）、純 Dart、**不是 plugin**、四平台皆可建置、不需 codegen —— 全部符合上方三項條件。它 pin `intl: ^0.20.3` 讓 `intl` 成為 transitive，但**刻意不在 `pubspec.yaml` 宣告** `intl`（下一條禁的是拿 `NumberFormat` 做千分位，不是套件存在）。
 - **不要用 `intl` 的 `NumberFormat` 做千分位**：`intl` 雖已是 transitive，但 locale grouping ≠ 商用機的「千分位開關」（部分 locale 用空格分隔），會引來與需求無關的行為差異。`lib/core/number_format.dart` 手寫即可。
 - `shared_preferences` 2.5.6 已於 Phase 2 引入，為本專案第一個 plugin。
 
