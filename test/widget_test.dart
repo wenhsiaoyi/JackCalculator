@@ -405,8 +405,12 @@ void main() {
 
   testWidgets('未識別語系退回 english 渲染', (tester) async {
     await pumpApp(tester, locales: const [Locale('ja', 'JP')]);
-    // AppStrings 目錄還沒接進視圖（Task 7），此處只驗解析不炸、按鍵仍在。
+    // 按鍵依 spec D10 刻意不在地化，`AC` 三語都長一樣，單靠它證明不了 fallback；
+    // 真正判準是設定頁標題取自英文目錄（AppStrings 已接進視圖）。
     expect(find.text('AC'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('openSettings')));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsOneWidget);
   });
 
   testWidgets('語言選單四選項存在，預設選到跟隨系統', (tester) async {
@@ -483,6 +487,12 @@ void main() {
       await tester.tap(find.byKey(const Key('openSettings')));
       await tester.pumpAndSettle();
 
+      // spec 驗收標準：`MaterialApp.title` 取自目錄（唯一會隨語系變動的標題；
+      // 原生啟動器名稱不動，見 spec OUT 項）。
+      expect(
+          tester.widget<MaterialApp>(find.byType(MaterialApp)).title,
+          strings.appTitle);
+
       for (final label in [
         strings.taxRateLabel,
         strings.taxRateHelper,
@@ -500,6 +510,40 @@ void main() {
             reason: 'AppBar 標題不該同時出現兩種語系');
       }
     }
+  });
+
+  // spec 驗收標準「選過之後重啟保持」：帶著已存語系冷開機時，持久化的 en 要蓋過系統 zh-TW。
+  // 這是最貼近使用者的失敗模式——繁中手機選英文、重開變回中文。
+  testWidgets('重啟後仍保持選過的語系：已存 en 蓋過系統 zh-TW', (tester) async {
+    await pumpApp(
+      tester,
+      locales: const [Locale('zh', 'TW')],
+      prefsValues: const {SettingsRepository.languageKey: 'en'},
+    );
+
+    await tester.tap(find.byKey(const Key('openSettings')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('設定'), findsNothing);
+  });
+
+  // spec 驗收標準：`decimalPlacesInactive` 有字串、此前無渲染驗證。
+  // 進設定頁把捨入切到 F，小數位標籤才換成停用變體（settings_screen.dart 的三元式）。
+  testWidgets('設定頁切到 F 後顯示小數位停用文案', (tester) async {
+    await pumpApp(tester, locales: const [Locale('zh', 'TW')]);
+    await tester.tap(find.byKey(const Key('openSettings')));
+    await tester.pumpAndSettle();
+
+    // 預設 5/4（非 F）時是普通標籤。
+    expect(find.text(AppStrings.traditional.decimalPlaces), findsOneWidget);
+
+    await tester.tap(find.text('F'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.text(AppStrings.traditional.decimalPlacesInactive), findsOneWidget);
+    expect(find.text(AppStrings.traditional.decimalPlaces), findsNothing);
   });
 
   // spec D6 那句「換語系不會被彈出設定頁」在這裡被證明；紅了請停在原地回報。

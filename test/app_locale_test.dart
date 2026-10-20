@@ -17,6 +17,9 @@ void main() {
       expect(resolveFrom([const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans')]), AppLocale.simplified);
       expect(resolveFrom([const Locale('zh', 'CN')]), AppLocale.simplified);
       expect(resolveFrom([const Locale('zh', 'SG')]), AppLocale.simplified);
+      // M3：zh 配到未列出的地區（此處加拿大）時，规则 3 的「沒有 Hant 線索 → 簡體」
+      // 是被斷言的決定，不是哪天會被人順手改動的意外。
+      expect(resolveFrom([const Locale('zh', 'CA')]), AppLocale.simplified);
     });
 
     test('清單順序優先，未識別的語系繼續往後找', () {

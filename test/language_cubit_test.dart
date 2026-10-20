@@ -36,6 +36,9 @@ void main() {
 
     cubit.setLanguage(null);
     await Future<void>.delayed(Duration.zero);
+    // M12：不能只測「key 已移除」，`emit(null)` 也要斷言 —— 現在實作如果
+    // 「刪了鍵但沒 emit null」也會通過，這條鎖住 state 本身。
+    expect(cubit.state, isNull);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.containsKey(SettingsRepository.languageKey), isFalse);
     await cubit.close();

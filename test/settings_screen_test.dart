@@ -28,6 +28,23 @@ BlocProvider<LanguageCubit> _languageProvider() {
   return BlocProvider.value(value: cubit);
 }
 
+/// 三語 harness 共用同一個「locale + supportedLocales + delegates」殼：
+/// 少了 delegate 那一組，非英文的 locale 一解析到 `AppBar` 就會因為找不到
+/// `MaterialLocalizations` 而斷言失敗（R8 的教訓）。把不變藏在一個地方、
+/// 三份會忘記的副本合成一份，之後要補第二個 script 也只需改這裡。
+Widget _settingsApp(SettingsCubit cubit, Locale locale) => MultiBlocProvider(
+      providers: [BlocProvider.value(value: cubit), _languageProvider()],
+      child: MaterialApp(
+        locale: locale,
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+        ],
+        localizationsDelegates: _harnessDelegates,
+        home: const SettingsScreen(),
+      ),
+    );
+
 void main() {
   test('parseTaxRate 只接受 0–100、最多一位小數', () {
     expect(parseTaxRate('5'), Decimal.fromInt(5));
@@ -73,20 +90,9 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      MultiBlocProvider(
-        providers: [BlocProvider.value(value: cubit), _languageProvider()],
-        child: MaterialApp(
-          locale: const Locale.fromSubtags(
-            languageCode: 'zh',
-            scriptCode: 'Hant',
-          ),
-          supportedLocales: const <Locale>[
-            Locale('en'),
-            Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
-          ],
-          localizationsDelegates: _harnessDelegates,
-          home: const SettingsScreen(),
-        ),
+      _settingsApp(
+        cubit,
+        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
       ),
     );
 
@@ -106,20 +112,9 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      MultiBlocProvider(
-        providers: [BlocProvider.value(value: cubit), _languageProvider()],
-        child: MaterialApp(
-          locale: const Locale.fromSubtags(
-            languageCode: 'zh',
-            scriptCode: 'Hant',
-          ),
-          supportedLocales: const <Locale>[
-            Locale('en'),
-            Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
-          ],
-          localizationsDelegates: _harnessDelegates,
-          home: const SettingsScreen(),
-        ),
+      _settingsApp(
+        cubit,
+        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
       ),
     );
 
@@ -134,18 +129,7 @@ void main() {
     addTearDown(cubit.close);
 
     await tester.pumpWidget(
-      MultiBlocProvider(
-        providers: [BlocProvider.value(value: cubit), _languageProvider()],
-        child: MaterialApp(
-          locale: const Locale('en'),
-          supportedLocales: const <Locale>[
-            Locale('en'),
-            Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
-          ],
-          localizationsDelegates: _harnessDelegates,
-          home: const SettingsScreen(),
-        ),
-      ),
+      _settingsApp(cubit, const Locale('en')),
     );
 
     await tester.enterText(find.byKey(const Key('taxRateField')), '150');
