@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_strings.dart';
 import '../../engine/calc_settings.dart';
 
 /// 顯示屏與鍵盤之間的細列：稅率 ｜ 捨入模式 ｜ 小數位 ｜ 千分位。
@@ -11,8 +12,10 @@ class StatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final strings = AppStrings.of(Localizations.localeOf(context));
     final style = TextStyle(fontSize: 13, color: scheme.onSurfaceVariant);
     final isFloat = settings.rounding == RoundingMode.float;
+    final separator = Text(strings.indicatorSeparator, style: style);
     return Container(
       height: 24,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -20,9 +23,8 @@ class StatusIndicator extends StatelessWidget {
       child: Row(
         children: [
           const Spacer(),
-          Text('${settings.taxRate}%',
-              key: const Key('indTax'), style: style),
-          Text('  ｜  ', style: style),
+          Text('${settings.taxRate}%', key: const Key('indTax'), style: style),
+          separator,
           Text(
             switch (settings.rounding) {
               RoundingMode.float => 'F',
@@ -34,12 +36,12 @@ class StatusIndicator extends StatelessWidget {
             style: style,
           ),
           if (!isFloat) ...[
-            Text('  ｜  ', style: style),
-            Text('${settings.decimalPlaces}位',
+            separator,
+            Text('${settings.decimalPlaces}${strings.placesSuffix}',
                 key: const Key('indPlaces'), style: style),
           ],
           if (settings.grouping) ...[
-            Text('  ｜  ', style: style),
+            separator,
             Text(',', key: const Key('indGrouping'), style: style),
           ],
         ],

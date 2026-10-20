@@ -397,7 +397,7 @@ void main() {
     for (final label in ['AC', 'C', '⌫', '÷', '=']) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
-    expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2位');
+    expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2 dp');
   });
 
   testWidgets('未識別語系退回 english 渲染', (tester) async {
@@ -553,5 +553,10 @@ void main() {
 
     expect(find.text(AppStrings.simplified.taxRateError), findsOneWidget);
     expect(find.text(AppStrings.traditional.taxRateError), findsNothing);
+  });
+
+  testWidgets('簡體 indicator 同繁中後綴、分隔符不變', (tester) async {
+    await pumpApp(tester, locales: const [Locale('zh', 'CN')]);
+    expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2位');
   });
 }
