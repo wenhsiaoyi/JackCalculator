@@ -4,6 +4,10 @@ import 'app_locale.dart';
 
 /// 三語字串目錄（spec D4：不建 Localizations delegate，視覺層直接查表）。
 /// 新增字串時三份都要補，`test/app_strings_test.dart` 會抓到漏填。
+///
+/// 刻意不入目錄（spec D10：計算機鍵名跨語系一致）：`Error`／`AC`／`C`／`⌫`／`±`／`÷`／
+/// `GT`／`MU`／`Tax+`／`Tax−`／`%`／`,`／`F/CUT/UP/5/4` 一律維持硬編碼；
+/// Phase 3 請不要順手把它們在地化。
 class AppStrings {
   const AppStrings({
     required this.appTitle,
@@ -32,7 +36,9 @@ class AppStrings {
   final String decimalPlacesInactive;
   final String grouping;
 
-  /// 小數位數後綴：中文「2位」、英文「2 dp」，由 StatusIndicator 拼接。
+  /// 小數位數「後綴」欄位：存的只有數字之後要接的那一段 —— 繁簡都是 `位`、英文是
+  /// `' dp'`（**含前導空格**）。渲染出來的 `2位`／`2 dp` 由 `StatusIndicator`
+  /// 把數字與此欄位串起來，呼叫端**不要**再把數字接第二次（M7）。
   final String placesSuffix;
 
   /// 狀態列分隔符：中文用全形｜，英文用半形直線加空格。

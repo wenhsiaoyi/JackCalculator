@@ -398,7 +398,7 @@ void main() {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     expect(tester.widget<Text>(find.byKey(const Key('indPlaces'))).data, '2 dp');
-    // 分隔符同样是目錄產物：三處來自預設設定（halfUp、2 位、千分位開）。
+    // 分隔符同樣是目錄產物：三處來自預設設定（halfUp、2 位、千分位開）。
     // 千分位關掉或切到 F 就會變少，別把這個數字照抄進其他測試（R15）。
     expect(find.text('   |   '), findsNWidgets(3));
   });

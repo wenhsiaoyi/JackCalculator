@@ -3,7 +3,7 @@ import 'dart:ui' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jack_calculator/core/app_strings.dart';
 
-/// 13 個欄位的存取器，讓下面兩個測試不用逐條複製。
+/// 13 個欄位的存取器，讓下面三個 `_fields` 遍歷測試不用逐條複製。
 /// 值是閉包，Dart 不能宣告成 `const`，這裡用 `final`（plan 原文的 `const` 無法編譯）。
 final Map<String, String Function(AppStrings)> _fields = {
   'appTitle': (s) => s.appTitle,
