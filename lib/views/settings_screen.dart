@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/settings_cubit.dart';
+import '../core/app_strings.dart';
 import '../engine/calc_settings.dart';
 
 /// 稅率輸入驗證：只接受 0–100、最多一位小數；非法回 null。
@@ -26,7 +27,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _taxController;
-  String? _taxError;
+  bool _taxInvalid = false;
 
   @override
   void initState() {
@@ -44,26 +45,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _onTaxChanged(SettingsCubit cubit, String value) {
     final parsed = parseTaxRate(value);
-    if (parsed == null) {
-      setState(() => _taxError = '請輸入 0–100、最多一位小數');
-      return;
-    }
-    setState(() => _taxError = null);
+    // 存「原因」不存字串：切語系後舊語言的錯誤訊息不會留著（spec D9）。
+    setState(() => _taxInvalid = parsed == null);
+    if (parsed == null) return;
     cubit.setTaxRate(parsed);
   }
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<SettingsCubit>();
+    final strings = AppStrings.of(Localizations.localeOf(context));
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text(strings.settingsTitle)),
       body: BlocBuilder<SettingsCubit, CalcSettings>(
         builder: (context, settings) {
           final isFloat = settings.rounding == RoundingMode.float;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('稅率 (%)'),
+              Text(strings.taxRateLabel),
               TextField(
                 key: const Key('taxRateField'),
                 controller: _taxController,
@@ -71,12 +71,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) => _onTaxChanged(cubit, value),
                 decoration: InputDecoration(
-                  errorText: _taxError,
-                  helperText: '範圍 0–100，最多一位小數',
+                  errorText: _taxInvalid ? strings.taxRateError : null,
+                  helperText: strings.taxRateHelper,
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('捨入模式'),
+              Text(strings.roundingMode),
               const SizedBox(height: 8),
               SegmentedButton<RoundingMode>(
                 segments: const [
@@ -91,7 +91,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     cubit.setRounding(selection.first),
               ),
               const SizedBox(height: 24),
-              Text(isFloat ? '小數位（F 模式下無效）' : '小數位'),
+              Text(isFloat
+                  ? strings.decimalPlacesInactive
+                  : strings.decimalPlaces),
               const SizedBox(height: 8),
               SegmentedButton<int>(
                 segments: const [
@@ -109,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
               SwitchListTile(
                 key: const Key('groupingSwitch'),
-                title: const Text('千分位'),
+                title: Text(strings.grouping),
                 value: settings.grouping,
                 onChanged: cubit.setGrouping,
               ),
