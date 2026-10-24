@@ -7,6 +7,13 @@ user-invocable: true
 
 > 使用 WordPress 台灣社群官方詞彙表（2,300+ 詞彙），翻譯英文軟體介面為台灣正體中文。
 
+## 配套文件
+
+- `data/glossary.csv`：WP 官方詞彙表本體（`scripts/search.py` 的搜尋來源）。
+- `data/taiwan-terms.csv`：繁化姬台灣化規則，也是 validator 掃描中國用語的清單。
+- [`references/STYLE_GUIDE.md`](references/STYLE_GUIDE.md)：整句翻譯的規則——標點、中英空格、數字格式、語氣、複數。
+- [`EXAMPLES.md`](EXAMPLES.md)：介面文案、按鈕、錯誤訊息的譯法範例。
+
 ## 何時使用此技能
 
 - 翻譯 WordPress 外掛/佈景主題
