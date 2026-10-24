@@ -123,12 +123,29 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - Android 工具鏈版本：AGP 9.1.0、Kotlin 2.4.0、Gradle 9.3.1；`android/app/build.gradle.kts` 宣告 Java 17，但**實際執行用的是 Android Studio 的 JBR 25.0.3**（見上方 JDK 一節）
 - `analysis_options.yaml` 只含 `flutter_lints` 預設規則，並把 `build/`、`android/`、`ios/`、`windows/`、`linux/` 排除於 analyzer 之外 —— 改平台原生檔不會被 lint 抓到。
 - `.idea/`、`*.iml`、`build/`、`.dart_tool/` 已被 `.gitignore` 涵蓋，本機 JetBrains 相關檔案不會出現在 `git status`。
-- **本 repo 刻意不放 `opencode.json`。** OpenCode 會自動載入根目錄的 `AGENTS.md`，不需要在 `instructions` 裡再指一次（會重複載入、浪費 context）。若之後確實需要放設定（例如 `formatter`、`lsp`），建立時**不要**把 `AGENTS.md` 列進 `instructions`。
+- **本 repo 刻意不放 `opencode.json`。** OpenCode 會自動載入根目錄的 `AGENTS.md`，不需要在 `instructions` 裡再指一次（會重複載入、浪費 context）。若之後確實需要放設定（例如 `formatter`、`lsp`），建立時**不要**把 `AGENTS.md` 列進 `instructions`。（2026-10-24：根目錄曾出現一份只含 trail MCP 的 `opencode.json`，與全域 `~/.config/opencode/opencode.jsonc` 內的同名設定完全重複，已刪除 —— **MCP 一律設在全域**，repo 內不留。）
 - PowerShell 下的兩個顯示陷阱：① `flutter doctor` 的 ✅/❌ 會變成亂碼 `?`，那是終端編碼問題，判讀要看英文文字行（`X` 開頭才是失敗）；② 背景指令**不要接 `| Out-String`**，它會緩衝整個輸出到行程結束才寫出，等於看不到任何即時進度。
 - **Flutter / Gradle 寫 stderr 會讓 PowerShell 噴 `NativeCommandError` 並回報 exit code 1，但那不是失敗。** `flutter build apk` 成功時照樣會噴（`SDK processing`、`restricted method` 那些 WARNING 都走 stderr）。**判斷成功要看有沒有 `√ Built ...` 或 `All tests passed!`，不要看 shell 回報的 exit code**
 - **要量磁碟用量千萬別用 `Get-ChildItem -Recurse`**：本機是 PowerShell 5.1，260 字元長路徑限制會漏算（實測 pub cache 少算 58 個檔案），速度也慢到不能用。改用 `robocopy <dir> C:\_null_ /L /S /BYTES /NFL /NDL /NJH /R:0 /W:0 /XJ`，從輸出行裡取最大的數字就是 bytes。`/L` 是 list-only、`/XJ` 跳過 junction（不加會在 `Documents and Settings` 之類的迴圈卡住）。**robocopy 沒有 `/NJS-` 這種參數 —— 亂加會讓它整個靜默失敗、全部輸出 0，而且 exit code 看不出來**，數字不合理時先手動跑一次單一目錄確認
 - 刪 `C:\tools\Android` 時 `Remove-Item -Recurse` 會剩下 `platform-tools\adb.exe` 等 3 個檔案 —— 那是 adb server 正在執行被鎖住。**先 `adb kill-server`（或停掉 adb 行程）再刪**，不用去碰 `robocopy /MIR` 那種大殺器
 
+
+## Terminal & ADB Execution Guidelines
+
+1. 查效能一律走 `.\scripts\` 底下現成的腳本，參數直接傳，不在指令裡拼 PowerShell 字串：
+   - CPU：`.\scripts\measure_cpu.ps1 -Package wenhsiaoyi.jack_calculator -Seconds 30`
+   - 需要裝置的 adb 子命令（自帶裝置檢查）：`.\scripts\adb_run.ps1 shell top -n 1`
+   - 其他 adb 子命令（原樣轉送，不檢查裝置）：`.\scripts\adb_monitor.ps1 install build\app\outputs\flutter-apk\app-release.apk`
+
+   三支都內含 `E:\Android\Sdk\platform-tools\adb.exe` 的完整路徑，呼叫端不必處理引號轉義；
+   三支都會把 adb 的離開碼原樣帶出去（`adb_monitor.ps1` 以前不會，2026-10-24 修正）。
+2. 任何 `adb shell` 之前先確認有狀態為 `device` 的機子：用 `.\scripts\adb_run.ps1 shell ...` 執行就會自動檢查並擋下來
+   （只有 `devices`／`version`／`connect`／`kill-server` 這類不需要裝置的子命令不檢查，白名單在 `adb_run.ps1` 的 `$noDeviceCommands`）；
+   想先看裝置清單就跑 `.\scripts\adb_run.ps1 devices`。沒有狀態為 `device` 的機子就停下來問使用者，不要猜裝置序號。
+3. **`scripts/` 的 `.ps1` 若含中文，必須存成 UTF-8 with BOM** —— PowerShell 5.1 讀到無 BOM 的檔案會用 CP950 解碼，
+   中文註解與訊息會變亂碼，而 `flutter analyze`／測試都抓不到。純 ASCII 的腳本（目前只有 `adb_monitor.ps1`）不加 BOM，
+   避免多餘的位元組；要改它的訊息就改英文。`measure_cpu.ps1`、`adb_run.ps1` 是 BOM ＋ 中文，別用會把 BOM 吃掉的編輯器存檔。
+   
 ## graft（`graft/` context graph）
 
 `graft/` 是本機快取，**已由 graft 自動寫進 `.gitignore`，不進版控** —— 沒有它的環境（例如同事）graph 是空的，要自己跑 `graft build`。MCP 設定在全域 `~/.config/opencode/opencode.jsonc`，repo 內不需要任何 graft 設定。
@@ -191,3 +208,45 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **專有名詞**：品牌與技術名詞保留英文（Flutter、Gradle、Windows…）。
 - **檢查方式**：用 `grep` 掃詞彙表的 `cn` 欄，或使用 `tw-translate` skill 的 `scripts/lookup.py`、`scripts/search.py`。注意本節的對照清單與說明本身即含被禁詞，掃描時須人工判讀（台灣的「文件」指 document，與詞彙表標的 file 語境不同，不算違規）。
 - **zh-Hans 豁免（2026-10-20 裁定）**：該規範管開發產出（文件、註解、commit）與繁體 UI；`lib/core/app_strings.dart` 的 zh-Hans 欄與對應測試期望值是道地大陸用語，掃詞彙表 `cn` 欄時跳過該檔簡體欄。
+
+<!-- trail:start -->
+## Trail — repo context graph
+
+This repo is indexed in `.trail/cache/`: small linked markdown nodes that explain each
+system and carry exact file:line spans, kept in sync with the code through git.
+
+For ANY task here — understanding how something works, finding where code lives,
+or scoping a change — get context from the graph before grepping or opening
+source files. Re-ask freely (it's cheap) and reuse literal identifiers you
+already have (symbol, error string, file name) as the query. New to this repo?
+Run `trail map` first — a token-budgeted orientation (dir clusters, hubs,
+hotspots), no LLM, no key.
+
+- Run `trail ask "<your question>" --source` → ranked nodes with the relevant
+  code spans inlined (each hit's ≤8-line crux by default; `--full` for whole
+  definitions when the crux isn't enough). Match the tool to the task shape:
+  for understanding or editing, the top node IS the answer — cite its
+  `covers:` file:line spans and edit straight from `--source`. For
+  exhaustive tasks ("every occurrence / every caller of this pattern"), ranked
+  results are top-N, not complete — run `trail grep "<literal>"` instead
+  (exhaustive over indexed files, grouped by enclosing symbol), falling back
+  to raw `grep -rn` only for unindexed files.
+- `trail skeleton <file>` → every definition's signature + span, ~10× cheaper
+  than reading the file; use it to skim an API surface.
+- `trail callers <symbol>` gives precomputed, exact edges — who calls this.
+  Add `--direction out` for what it calls, or `--depth N` to walk
+  transitively for the full blast radius. For structural questions, skip
+  ranking and use this directly.
+- Or browse: `.trail/cache/INDEX.md` lists every node; follow the links.
+- Monorepos and folders of multiple repos rank fairly across sub-projects —
+  hits carry `[scope/]` labels naming which one they're from. Narrow with
+  `trail ask "<task>" --in <scope>/` once you know where you're working.
+
+If a returned span is truncated ("+N more lines"), open the file at that exact
+range before finalizing. Only open source files when a node genuinely lacks a
+needed detail, and then at the exact file:line the node points to — never
+re-read whole files.
+
+After big code changes, refresh the graph with `trail build` (deterministic,
+no API key, $0).
+<!-- trail:end -->
