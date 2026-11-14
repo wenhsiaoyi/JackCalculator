@@ -5,13 +5,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'bloc/calculator_cubit.dart';
 import 'bloc/language_cubit.dart';
 import 'bloc/settings_cubit.dart';
+import 'core/ad_service.dart';
 import 'core/app_locale.dart';
 import 'core/app_strings.dart';
 import 'core/theme.dart';
 import 'data/settings_repository.dart';
 import 'views/calculator_screen.dart';
 
-void main() => runApp(const JackCalculator());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AdService.initialize();
+  runApp(const JackCalculator());
+}
 
 class JackCalculator extends StatelessWidget {
   const JackCalculator({super.key});
