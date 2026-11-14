@@ -6,15 +6,15 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 
 ## 環境（本機實測 2026-10-13）
 
-- Flutter **3.47.7** stable，SDK 在 `c:\tools\flutter`（非預設路徑）；Dart 3.13.5；`pubspec.yaml` SDK 限制 `^3.13.5`
+- Flutter **3.50.0** stable，SDK 在 `c:\tools\flutter`（非預設路徑）；Dart 3.14.0；`pubspec.yaml` SDK 限制 `^3.13.5`（未動）。**SDK 於 2026-11-14 被外部從 3.47.7 升級到 3.50.0**（AdMob 一輪發現）：3.50 把 `material.dart` 標 deprecated（後繼為 `material_ui` 套件），依裁定在 `analysis_options.yaml` 加 `deprecated_member_use: ignore`，遷移另開一輪；AGP 也隨 3.50 下限從 9.1.0 升 9.1.1（見 Android 工具鏈）
 - org / 套件名：`wenhsiaoyi` / `jack_calculator`
 - 平台：**android / ios / windows / linux**。沒有 web、沒有 macos，`web/` 與 `macos/` 目錄不存在
 - Visual Studio Community 2022 (17.14.39) + Windows 10 SDK 已安裝 → doctor 檢查通過；Windows 是唯一能本機跑起來的目標
 - Android SDK 在 `E:\Android\Sdk`，現況已足夠建置：platforms **android-33 / android-36**、build-tools **33.0.2 / 36.0.0**、ndk **28.2.13676358**、cmdline-tools **23.0.0**（新版 Android CLI，套件名用斜線格式）、emulator 37.2.12、system-images android-36
 - **開發工具快取全部在 E:，不要寫回 C:** `GRADLE_USER_HOME=E:\gradle-home`、`PUB_CACHE=E:\pub-cache`（使用者層級環境變數）。Gradle wrapper 指定的 **Gradle 9.3.1 已手動安裝**在 `E:\gradle-home\wrapper\dists\`，見下方「Gradle distribution 下載」
 - **`C:\tools\Android` 那套 30.30 GB 的舊 Android SDK 已於 2026-10-13 刪除**，見下方「環境變更」
-- 無 codegen（未引入 build_runner）、**目前唯一第三方 plugin 為 `shared_preferences`**；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`、`flutter_localizations`（**SDK 套件，`sdk: flutter`，不是 plugin、不進 pub.dev**；2026-10-20 多國語系一輪引入）（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族）。**`intl 0.20.3` 在 `pubspec.lock` 仍是 `dependency: transitive`、`pubspec.yaml` 未宣告、也不用於千分位** —— `flutter_localizations` 能在不宣告 `intl` 的前提下解析成功（實測：`pub get`／`analyze`／`test`／雙平台 build 全過，`pubspec.yaml` 與 `pubspec.lock` 在本輪零變動）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
-- **測試基線：182 條全綠**（2026-10-20 多國語系一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
+- 無 codegen（未引入 build_runner）、第三方 plugin：`shared_preferences`、`google_mobile_ads`（**僅 Android／iOS 生效**，2026-11-14 AdMob 一輪引入，見依賴政策例外）；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`、`google_mobile_ads`、`flutter_localizations`（**SDK 套件，`sdk: flutter`，不是 plugin、不進 pub.dev**；2026-10-20 多國語系一輪引入）（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族、`webview_flutter` 家族）。**`intl 0.20.3` 在 `pubspec.lock` 仍是 `dependency: transitive`、`pubspec.yaml` 未宣告、也不用於千分位** —— `flutter_localizations` 能在不宣告 `intl` 的前提下解析成功（實測：`pub get`／`analyze`／`test`／雙平台 build 全過，`pubspec.yaml` 與 `pubspec.lock` 在本輪零變動）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
+- **測試基線：189 條全綠**（2026-11-14 AdMob 一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
 - **沒有 CI**（無 `.github/`、無 pre-commit hook）。驗證只能靠本機指令
 
 ## 指令
@@ -22,7 +22,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 ```powershell
 flutter pub get
 flutter analyze          # lint；設定於 analysis_options.yaml（flutter_lints 6.0）
-flutter test             # 全部測試（目前 182 個）
+flutter test             # 全部測試（目前 189 個）
 flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
@@ -120,7 +120,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - `flutter create .` 可安全用來補平台目錄：`.metadata` 已把 `lib/main.dart` 列為 `unmanaged_files`，不會被覆蓋。使用前先確認 `flutter config` 的 `--enable-windows-desktop` / `--enable-linux-desktop` 仍開著。
 - `pubspec.lock` **有進版控**，別隨手 `flutter pub upgrade`，會產生無關 diff。
 - Android `applicationId` / namespace = `wenhsiaoyi.jack_calculator`（含底線）。上架前請確認商店是否接受。
-- Android 工具鏈版本：AGP 9.1.0、Kotlin 2.4.0、Gradle 9.3.1；`android/app/build.gradle.kts` 宣告 Java 17，但**實際執行用的是 Android Studio 的 JBR 25.0.3**（見上方 JDK 一節）
+- Android 工具鏈版本：AGP 9.1.1（2026-11-14 從 9.1.0 升級：Flutter 3.50 最低要求 9.1.1，否則 debug／release APK 建置都失敗）、Kotlin 2.4.0、Gradle 9.3.1；AGP 9.1.1 會另產 `android/build/reports/`，已加進 `.gitignore`；`android/app/build.gradle.kts` 宣告 Java 17，但**實際執行用的是 Android Studio 的 JBR 25.0.3**（見上方 JDK 一節）
 - `analysis_options.yaml` 只含 `flutter_lints` 預設規則，並把 `build/`、`android/`、`ios/`、`windows/`、`linux/` 排除於 analyzer 之外 —— 改平台原生檔不會被 lint 抓到。
 - `.idea/`、`*.iml`、`build/`、`.dart_tool/` 已被 `.gitignore` 涵蓋，本機 JetBrains 相關檔案不會出現在 `git status`。
 - **本 repo 刻意不放 `opencode.json`。** OpenCode 會自動載入根目錄的 `AGENTS.md`，不需要在 `instructions` 裡再指一次（會重複載入、浪費 context）。若之後確實需要放設定（例如 `formatter`、`lsp`），建立時**不要**把 `AGENTS.md` 列進 `instructions`。（2026-10-24：根目錄曾出現一份只含 trail MCP 的 `opencode.json`，與全域 `~/.config/opencode/opencode.jsonc` 內的同名設定完全重複，已刪除 —— **MCP 一律設在全域**，repo 內不留。）
@@ -145,6 +145,11 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 3. **`scripts/` 的 `.ps1` 若含中文，必須存成 UTF-8 with BOM** —— PowerShell 5.1 讀到無 BOM 的檔案會用 CP950 解碼，
    中文註解與訊息會變亂碼，而 `flutter analyze`／測試都抓不到。純 ASCII 的腳本（目前只有 `adb_monitor.ps1`）不加 BOM，
    避免多餘的位元組；要改它的訊息就改英文。`measure_cpu.ps1`、`adb_run.ps1` 是 BOM ＋ 中文，別用會把 BOM 吃掉的編輯器存檔。
+4. **Git Bash 呼叫 `adb_run.ps1` 的兩個坑**：① MSYS 會把開頭 `/` 的參數（如 `/sdcard/x.png`）轉成 Windows 路徑，
+   前置 `MSYS_NO_PATHCONV=1`；② 腳本有 `[CmdletBinding()]`，adb 的 `-p` 會被綁成 PowerShell 的 `-PipelineVariable`
+   （`screencap -p` 變裸輸出、把二進位 dump 到 stdout），要用 stop-parsing token：
+   `MSYS_NO_PATHCONV=1 powershell -NoProfile -Command "& ./scripts/adb_run.ps1 --% shell screencap -p /sdcard/x.png"`。
+   `adb_monitor.ps1` 用 `$args`、沒有坑②，但坑①仍適用。
    
 ## graft（`graft/` context graph）
 
@@ -197,6 +202,19 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **`flutter_localizations`（2026-10-20 多國語系一輪引入）**：Flutter 官方 **SDK 套件**（`sdk: flutter` 從 Flutter SDK 取，**不進 pub.dev**）、純 Dart、**不是 plugin**、四平台皆可建置、不需 codegen —— 全部符合上方三項條件。它 pin `intl: ^0.20.3` 讓 `intl` 成為 transitive，但**刻意不在 `pubspec.yaml` 宣告** `intl`（下一條禁的是拿 `NumberFormat` 做千分位，不是套件存在）。
 - **不要用 `intl` 的 `NumberFormat` 做千分位**：`intl` 雖已是 transitive，但 locale grouping ≠ 商用機的「千分位開關」（部分 locale 用空格分隔），會引來與需求無關的行為差異。`lib/core/number_format.dart` 手寫即可。
 - `shared_preferences` 2.5.6 已於 Phase 2 引入，為本專案第一個 plugin。
+- **`google_mobile_ads` 例外（2026-11-14 使用者核准）**：官方只支援 Android／iOS，牴觸第 2 條「至少 Windows 可建置」。裁定：廣告類 plugin 僅 Android／iOS 生效，**桌面建置不受影響即可**（無 Windows 原生碼，Flutter 跳過未實作平台；`flutter build windows` 已實測通過）。9.2.0，`sdk: >=3.10.0 <4.0.0`、`flutter: >=3.38.1`，transitive 帶入 `webview_flutter` 家族（同樣無 Windows 原生碼）。
+
+## AdMob（2026-11-14 一輪，branch `feat/admob`）
+
+設計 `docs/superpowers/specs/2026-11-14-jack-calculator-admob-design.md`、計畫 `docs/superpowers/plans/2026-11-14-jack-calculator-admob.md`。主畫面底部錨定自適應 Banner＋設定頁「支持我們」插屏（關閉後感謝 SnackBar）；僅 Android／iOS，桌面無廣告（`AdService.supported` gate，桌面渲染 zero-size）。
+
+- **本輪全用官方測試值，上架前必換**：App ID Android `ca-app-pub-3940256099942544~3347511713`／iOS `ca-app-pub-3940256099942544~1458002511`；Banner 單元 Android `…/9214589741`／iOS `…/2435281174`；Interstitial 單元 Android `…/1033173712`／iOS `…/4411468910`（完整 ID 見 spec）。
+- **測試裝置**：`jack_android36` 的 ID `E65AFE3B8939AFE09E942D96966EFC21` 已註冊在 `AdService.testDeviceIds`，`kDebugMode` 限定（release 不套用）。該 ID 是 `settings get secure android_id`（`51252fc21f60e241`）的 MD5 大寫 —— logcat 只印「This request is sent from a test device.」、沒印 `setTestDeviceIds` 訊息（模擬器自動判為測試裝置），走 spec 備援路徑。模擬器 wipe／重建後 ID 會變：重取看 `logcat -s Ads` 的 `setTestDeviceIds` 訊息，或同法取 MD5。
+- **模擬器驗證要用 debug APK**（`flutter build apk --debug`）：release 的 `kDebugMode=false`，測試裝置設定不生效。
+- **實測觀察**：① 廣告自身的測試標籤（Test Ad）跟廣告 SDK 的語系（系統語系），不跟 App 語系 —— App 繁中時標籤仍可能顯示簡體（見截圖）；② 直接 `settings put system system_locales` 不會觸發 App 語系變更，驗證繁中請走 App 內語言選單；③ 插屏首次顯示會蓋一層 Android 全螢幕系統對話框（按鈕為「知道了」），點掉才看得到廣告與關閉鈕；關閉鈕 × 在倒數結束後才出現於右上。
+- **上架前待辦**：換正式 App ID／廣告單元 ID、清空 `testDeviceIds`、GDPR／UMP 同意、iOS `SKAdNetworkItems`。
+- 截圖證據：`docs/admob/banner.png`／`settings.png`／`interstitial.png`／`thanks.png`（2026-11-14，jack_android36、繁中）。
+- APK 體積：release 52,320,052 bytes（49.90 MiB），對 47.89 MiB 基線增量 **+2.01 MiB**（2,107,910 bytes；GMA SDK＋webview transitive）。
 
 ## 中文用語規範（台灣正體）
 
