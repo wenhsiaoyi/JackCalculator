@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/calculator_cubit.dart';
 import '../bloc/calculator_state.dart';
 import '../bloc/settings_cubit.dart';
+import 'components/banner_ad_view.dart';
 import 'components/calc_button.dart';
 import 'components/display_screen.dart';
 import 'components/status_indicator.dart';
@@ -133,6 +134,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       ),
                     ),
                   ),
+                  const BannerAdView(),
                 ],
               ),
             ),
