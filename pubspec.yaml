@@ -39,6 +39,7 @@ dependencies:
   flutter_bloc: ^9.0.0
   decimal: ^3.2.0
   shared_preferences: ^2.5.6
+  google_mobile_ads: ^9.2.0
 
 dev_dependencies:
   flutter_test:
