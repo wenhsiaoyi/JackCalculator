@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Google Mobile Ads Flutter 外掛（google_mobile_ads）快速入門規格：匯入、設定、初始化與廣告格式選擇。">
+<title>AdMob for Flutter 外掛 · 快速入門規格</title>
+<style>
+:root {
+  --bg: #0e1116;
+  --surface: #161b22;
+  --surface-2: #1c222b;
+  --line: #2a313c;
+  --ink: #e6edf3;
+  --ink-dim: #9ba7b4;
+  --accent: #ff7a1a;
+  --accent-soft: #ffb27a;
+  --secondary: #3ddc84;
+  --mono: "Cascadia Code", "Consolas", ui-monospace, SFMono-Regular, "SF Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif;
+  --measure: 68ch;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.75;
+  -webkit-text-size-adjust: 100%;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--accent);
+  color: #0e1116;
+  padding: .5rem .9rem;
+  border-radius: 0 0 var(--radius) 0;
+  font-weight: 600;
+}
+.skip:focus { left: 0; z-index: 10; }
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2.75rem 1.5rem 1.75rem;
+  border-bottom: 1px solid var(--line);
+}
+.dial { flex: 0 0 auto; }
+.eyebrow {
+  margin: 0 0 .35rem;
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+.masthead h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4.5vw, 2.35rem);
+  letter-spacing: -.015em;
+  font-weight: 650;
+}
+.standfirst {
+  margin: .5rem 0 0;
+  max-width: 46ch;
+  color: var(--ink-dim);
+  font-size: .95rem;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
+  gap: 3.5rem;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.toc { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow: auto; }
+.toc-label {
+  margin: 0 0 .6rem;
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc .toc-group { margin: .5rem 0; }
+.toc .toc-group > a.toc-group-link {
+  display: block;
+  padding: .3rem .7rem;
+  border-left: 2px solid var(--accent);
+  color: var(--ink);
+  font-size: .9rem;
+  font-weight: 640;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.toc .toc-sub { padding-left: .9rem; margin: .2rem 0 .5rem; }
+.toc .toc-sub a { font-size: .84rem; }
+.toc a {
+  display: block;
+  padding: .3rem .7rem;
+  border-left: 2px solid var(--line);
+  color: var(--ink-dim);
+  font-size: .88rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.toc a code { background: none; color: inherit; padding: 0; font-size: .95em; }
+@media (prefers-reduced-motion: no-preference) {
+  .toc a { transition: color .15s ease, border-color .15s ease; }
+}
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+
+main { min-width: 0; }
+main > p, main > ul, main > h2, main > h3 { max-width: var(--measure); }
+
+main h2 {
+  position: relative;
+  margin: 3rem 0 .9rem;
+  padding-left: 1rem;
+  font-size: 1.32rem;
+  font-weight: 640;
+  letter-spacing: -.01em;
+  scroll-margin-top: 1.5rem;
+}
+main h2:first-child { margin-top: 0; }
+main h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .52em;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--secondary);
+}
+main h3 {
+  margin: 2.1rem 0 .65rem;
+  padding-left: .72rem;
+  border-left: 2px solid var(--line);
+  font-size: 1.06rem;
+  font-weight: 620;
+  color: var(--ink);
+  scroll-margin-top: 1.5rem;
+}
+
+p { margin: .8rem 0; }
+strong { font-weight: 660; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { color: var(--accent-soft); }
+
+code {
+  font-family: var(--mono);
+  font-size: .875em;
+  color: var(--accent-soft);
+  background: var(--surface-2);
+  padding: .1em .38em;
+  border-radius: 4px;
+}
+
+ul { margin: .8rem 0; padding-left: 1.25rem; }
+li { margin: .45rem 0; }
+li::marker { color: var(--accent); }
+
+pre.code {
+  margin: 1.1rem 0;
+  padding: .9rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre.code code {
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  font-size: .84rem;
+}
+
+.table-wrap { margin: 1.2rem 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .6rem .85rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: var(--surface);
+  font-weight: 600;
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+td code { font-size: .84em; }
+
+.callout {
+  margin: 1.1rem 0;
+  padding: .85rem 1.1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: .95rem;
+}
+.callout strong { color: var(--accent-soft); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+footer {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 3rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: .84rem;
+}
+footer p { margin: .25rem 0; }
+
+@media (max-width: 60rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-top: 1.75rem; }
+  .toc { position: static; max-height: none; padding-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+  .toc ol { display: block; }
+  .toc .toc-group { display: inline-block; vertical-align: top; width: 48%; margin-right: 2%; }
+  .masthead { align-items: flex-start; gap: 1.1rem; padding-top: 2rem; }
+  .dial { width: 52px; height: 52px; }
+}
+@media print {
+  :root {
+    --bg: #fff; --surface: #fff; --surface-2: #f4f4f4; --line: #ccd0d5;
+    --ink: #111315; --ink-dim: #4a5158; --accent: #a8460a; --accent-soft: #8a3906;
+    --secondary: #0a7a45;
+  }
+  .toc, .dial, .skip { display: none; }
+  .shell { display: block; padding: 0; }
+  main { max-width: none; }
+  pre.code, table, .table-wrap { break-inside: avoid; }
+  a { text-decoration: underline; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到內容</a>
+
+<header class="masthead">
+  <svg class="dial" width="72" height="72" viewBox="0 0 64 64" role="img" aria-label="AdMob 外掛規格">
+    <circle cx="32" cy="32" r="27.5" fill="none" stroke="#2a313c" stroke-width="2.5"/>
+    <g stroke="#9ba7b4" stroke-width="2.5" stroke-linecap="round">
+      <path d="M32 3v6M32 55v6M3 32h6M55 32h6"/>
+    </g>
+    <text x="32" y="40" text-anchor="middle" font-family="system-ui" font-size="20" font-weight="700" fill="#ff7a1a">Ad</text>
+    <circle cx="32" cy="32" r="3" fill="#e6edf3"/>
+    <circle cx="32" cy="32" r="1.3" fill="#0e1116"/>
+  </svg>
+  <div>
+    <p class="eyebrow">Google Mobile Ads · Flutter Plugin</p>
+    <h1>AdMob for Flutter 外掛 · 快速入門規格</h1>
+    <p class="standfirst">依 Google 官方快速入門文件整理：平台支援、前置需求、匯入、設定、初始化與廣告格式選擇。</p>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc" aria-label="章節">
+    <p class="toc-label">章節</p>
+    <ol>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-1">入門</a>
+        <ul class="toc-sub">
+          <li><a href="#h-1">概述</a></li>
+          <li><a href="#h-2">平台支援</a></li>
+          <li><a href="#h-3">前置需求</a></li>
+          <li><a href="#h-4">匯入外掛</a></li>
+          <li><a href="#h-5">設定應用程式</a></li>
+          <li><a href="#h-6">初始化 SDK</a></li>
+          <li><a href="#h-7">選擇廣告格式</a></li>
+        </ul>
+      </li>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-8">廣告格式</a>
+        <ul class="toc-sub">
+          <li><a href="#h-8">Banner 廣告</a></li>
+          <li><a href="#h-9">Interstitial 廣告</a></li>
+          <li><a href="#h-10">Native 廣告</a></li>
+          <li><a href="#h-11">Rewarded 廣告</a></li>
+          <li><a href="#h-12">Rewarded interstitial 廣告</a></li>
+          <li><a href="#h-13">App open 廣告</a></li>
+        </ul>
+      </li>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-14">Mediation 與工具</a>
+        <ul class="toc-sub">
+          <li><a href="#h-14">Mediation（中介）</a></li>
+          <li><a href="#h-15">Ad Inspector</a></li>
+          <li><a href="#h-19">WebView API for Ads</a></li>
+        </ul>
+      </li>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-16">偵錯與測試</a>
+        <ul class="toc-sub">
+          <li><a href="#h-16">廣告載入錯誤</a></li>
+          <li><a href="#h-17">回應資訊（ResponseInfo）</a></li>
+          <li><a href="#h-18">伺服器端驗證（SSV）</a></li>
+          <li><a href="#h-21">測試廣告</a></li>
+        </ul>
+      </li>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-20">平台與進階</a>
+        <ul class="toc-sub">
+          <li><a href="#h-20">Android GMA Next-Gen SDK</a></li>
+        </ul>
+      </li>
+      <li class="toc-group">
+        <a class="toc-group-link" href="#h-22">補充與參考</a>
+        <ul class="toc-sub">
+          <li><a href="#h-22">補充資訊</a></li>
+          <li><a href="#h-23">參考來源</a></li>
+        </ul>
+      </li>
+    </ol>
+  </nav>
+  <main id="main">
+    <h2 id="h-1">概述</h2>
+    <p>要投放廣告並賺取收益，需將 <strong>Google Mobile Ads Flutter Plugin</strong> 整合進 Flutter 應用程式。在請求廣告之前，必須先匯入並初始化外掛。</p>
+    <p>本規格涵蓋：匯入與初始化 Google Mobile Ads Flutter Plugin，以及選擇廣告格式。</p>
+    <div class="callout"><strong>注意：</strong>Google Mobile Ads Flutter Plugin 僅支援 Android 與 iOS，<strong>不支援</strong> web 與桌面平台。</div>
+
+    <h2 id="h-2">平台支援</h2>
+    <ul>
+      <li><strong>支援</strong>：Android、iOS</li>
+      <li><strong>不支援</strong>：Web、桌面平台（Windows / macOS / Linux）</li>
+    </ul>
+    <p>若專案需同時支援 web／桌面，需另行處理廣告策略（例如以條件編譯或平台判斷跳過廣告）。</p>
+
+    <h2 id="h-3">前置需求</h2>
+    <ul>
+      <li>Flutter <code>3.38.1</code> 或更高版本</li>
+      <li>Android：最新版 Android Studio</li>
+      <li>iOS：最新版 Xcode 並啟用命令列工具（詳見 <a href="https://flutter.dev/docs/get-started/install/macos#install-xcode" target="_blank" rel="noopener">Install Flutter</a>）</li>
+      <li>AdMob 應用程式 ID（App ID）。詳見 <a href="https://support.google.com/admob/answer/7356431" target="_blank" rel="noopener">Find and copy an app ID or ad unit ID</a></li>
+    </ul>
+
+    <h2 id="h-4">匯入外掛</h2>
+    <p>請參考 <a href="https://pub.dev/packages/google_mobile_ads/install" target="_blank" rel="noopener">google_mobile_ads</a>（pub.dev）進行匯入。</p>
+    <h3>加入相依</h3>
+    <p>執行以下指令：</p>
+    <pre class="code" data-lang="shell"><code>$ flutter pub add google_mobile_ads</code></pre>
+    <p>這會在 <code>pubspec.yaml</code> 加入類似下列的一行（並隱式執行 <code>flutter pub get</code>）：</p>
+    <pre class="code" data-lang="yaml"><code>dependencies:
+  google_mobile_ads: ^9.2.0</code></pre>
+    <p>或在編輯器中執行 <code>flutter pub get</code>。</p>
+    <h3>匯入 Dart 程式碼</h3>
+    <p>在 Dart 程式碼中使用：</p>
+    <pre class="code" data-lang="dart"><code>import 'package:google_mobile_ads/google_mobile_ads.dart';</code></pre>
+
+    <h2 id="h-5">設定應用程式</h2>
+    <p>匯入外掛後，選擇平台進行設定：</p>
+
+    <h3>Android</h3>
+    <ol>
+      <li>在 Android Studio 中開啟 <code>android/app/src/main/AndroidManifest.xml</code>。</li>
+      <li>在 <code>&lt;application&gt;</code> 標籤內加入 <code>&lt;meta-data&gt;</code> 標籤：</li>
+    </ol>
+    <pre class="code" data-lang="xml"><code>&lt;manifest&gt;
+    &lt;application&gt;
+        &lt;!-- 範例 AdMob app ID：ca-app-pub-3940256099942544~3347511713 --&gt;
+        &lt;meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy"/&gt;
+    &lt;/application&gt;
+&lt;/manifest&gt;</code></pre>
+    <ul>
+      <li><strong><code>android:name</code></strong>：必須為 <code>com.google.android.gms.ads.APPLICATION_ID</code></li>
+      <li><strong><code>android:value</code></strong>：填入 AdMob 應用程式 ID</li>
+    </ul>
+    <p>詳見 <a href="https://developers.google.com/admob/android/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads SDK (Legacy)</a>。</p>
+
+    <h3>iOS</h3>
+    <ol>
+      <li>在 Xcode 中開啟 <code>ios/Runner/Info.plist</code>。</li>
+      <li>加入 <code>GADApplicationIdentifier</code> 鍵，值為 AdMob 應用程式 ID 字串：</li>
+    </ol>
+    <pre class="code" data-lang="xml"><code>&lt;key&gt;GADApplicationIdentifier&lt;/key&gt;
+&lt;string&gt;ca-app-pub-################~##########&lt;/string&gt;</code></pre>
+    <p>詳見 <a href="https://developers.google.com/admob/ios/quick-start.md.txt#update_your_infoplist" target="_blank" rel="noopener">Update your Info.plist</a>。</p>
+
+    <h2 id="h-6">初始化 SDK</h2>
+    <p>載入廣告之前，必須呼叫 <code>MobileAds.instance.initialize()</code> 初始化 Google Mobile Ads Flutter Plugin。</p>
+    <p>此方法回傳一個 <code>Future</code>，在初始化完成或 <strong>30 秒</strong>後結束。</p>
+    <pre class="code" data-lang="dart"><code>// Initialize the Mobile Ads SDK.
+MobileAds.instance.initialize();</code></pre>
+    <div class="callout"><strong>注意：</strong>初始化為非同步；應在請求任何廣告之前完成初始化，並可 await 該 Future 以確保就緒。</div>
+
+    <h2 id="h-7">選擇廣告格式</h2>
+    <p>匯入外掛後，可選擇欲實作的廣告格式。AdMob 提供以下格式：</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>廣告格式</th><th>說明</th><th>文件</th></tr></thead>
+      <tbody>
+        <tr><td>Banner</td><td>在指定區域顯示矩形廣告；自動重新整理，使用者停留在同一畫面即可持續看到廣告。</td><td><a href="https://developers.google.com/admob/flutter/banner.md.txt" target="_blank" rel="noopener">Set up banner ads</a></td></tr>
+        <tr><td>Interstitial</td><td>全螢幕廣告；放置於自然的轉換點，如關卡之間。</td><td><a href="https://developers.google.com/admob/flutter/interstitial.md.txt" target="_blank" rel="noopener">Interstitial ads</a></td></tr>
+        <tr><td>Native</td><td>自訂資產（標題、行動呼籲等），使廣告符合應用程式的視覺設計。</td><td><a href="https://developers.google.com/admob/flutter/native.md.txt" target="_blank" rel="noopener">Load a native ad</a></td></tr>
+        <tr><td>Rewarded</td><td>使用者觀看影片或填答問卷以獲得應用程式內獎勵（如金幣、額外生命）；每個廣告單元可指定獎勵值。</td><td><a href="https://developers.google.com/admob/flutter/rewarded.md.txt" target="_blank" rel="noopener">Rewarded ads</a></td></tr>
+        <tr><td>Rewarded interstitial</td><td>在應用程式轉換過程中顯示，可提供獎勵（如金幣、額外生命）。</td><td><a href="https://developers.google.com/admob/flutter/rewarded-interstitial.md.txt" target="_blank" rel="noopener">Rewarded interstitial ads</a></td></tr>
+        <tr><td>App open</td><td>使用者開啟或返回應用程式時顯示，覆蓋載入畫面。</td><td><a href="https://developers.google.com/admob/flutter/app-open.md.txt" target="_blank" rel="noopener">App open ads</a></td></tr>
+      </tbody>
+    </table></div>
+
+    <h2 id="h-8">Banner 廣告</h2>
+    <p>Banner 廣告佔據應用程式佈局中的某個位置，通常在裝置螢幕的頂部或底部。它在使用者與應用程式互動時持續顯示於畫面上，並可在一段時間後自動重新整理。</p>
+    <p>本指南以<strong>錨定自適應 Banner 廣告（anchored adaptive banner）</strong>為起點。詳見 <a href="https://support.google.com/admob/answer/9993556" target="_blank" rel="noopener">anchored adaptive banner ads</a>。</p>
+    <p>錨定自適應 Banner 是固定長寬比（而非固定尺寸）的廣告，長寬比類似 <code>320x50</code>。指定可用的全寬後，Google Mobile Ads Flutter Plugin 會回傳該寬度下的最佳高度；最佳高度在不同廣告請求之間保持一致，重新整理時周圍內容不會位移。</p>
+    <p>大型自適應 Banner 提供更大的格式，設計用於非捲動佈局。相較於標準錨定自適應 Banner，允許更高的最大高度（最多螢幕高度的 20%，介於 50–150 dp），增加的空間針對影片內容最佳化。</p>
+
+    <h3>務必使用測試廣告</h3>
+    <p>建置與測試應用程式時，務必使用測試廣告而非正式廣告。否則可能導致帳號遭停權。</p>
+    <p>Banner 專用的測試廣告單元 ID：</p>
+    <pre class="code" data-lang="text"><code>Android：ca-app-pub-3940256099942544/9214589741
+iOS：    ca-app-pub-3940256099942544/2435281174</code></pre>
+    <p>測試廣告單元會對每個請求回傳測試廣告，可在撰寫、測試與除錯期間自由使用。發布應用程式前務必替換為自己的廣告單元 ID。</p>
+
+    <h3>取得廣告尺寸</h3>
+    <p>為請求正確尺寸的 Banner 廣告，請依下列步驟：</p>
+    <ol>
+      <li>使用 <code>MediaQuery.of(context)</code> 取得裝置螢幕寬度（以密度無關像素 dp 計）。若不想使用全螢幕寬度，可自行設定寬度。</li>
+      <li>使用 <code>AdSize</code> 類別的適當靜態方法取得 <code>AdSize</code> 物件。例如使用 <code>AdSize.getLargeAnchoredAdaptiveBannerAdSize(int width)</code> 取得目前方向的廣告尺寸。</li>
+    </ol>
+    <pre class="code" data-lang="dart"><code>// 載入廣告前先取得 AnchoredAdaptiveBannerAdSize。
+final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
+  MediaQuery.sizeOf(context).width.truncate(),
+);</code></pre>
+
+    <h3>載入廣告</h3>
+    <p>以下範例載入一個 Banner 廣告：</p>
+    <pre class="code" data-lang="dart"><code>void _loadAd() async {
+  // 載入廣告前先取得 AnchoredAdaptiveBannerAdSize。
+  final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
+    MediaQuery.sizeOf(context).width.truncate(),
+  );
+
+  if (size == null) {
+    // 無法取得錨定 Banner 的寬度。
+    return;
+  }
+
+  unawaited(
+    BannerAd(
+      adUnitId: "_adUnitId",
+      request: const AdRequest(),
+      size: size,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          // 廣告成功接收時呼叫。
+          debugPrint('Ad was loaded.');
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        },
+        onAdFailedToLoad: (ad, err) {
+          // 廣告請求失敗時呼叫。
+          debugPrint('Ad failed to load with error: $err');
+          ad.dispose();
+        },
+      ),
+    ).load(),
+  );
+}</code></pre>
+    <p>將 <code>_adUnitId</code> 替換為自己的廣告單元 ID。</p>
+
+    <h3>Banner 廣告事件</h3>
+    <p>透過 <code>BannerAdListener</code> 可監聽生命週期事件，例如廣告載入完成。以下範例實作各方法並記錄訊息：</p>
+    <pre class="code" data-lang="dart"><code>onAdOpened: (Ad ad) {
+  // 廣告開啟覆蓋螢幕的 overlay 時呼叫。
+  debugPrint('Ad was opened.');
+},
+onAdClosed: (Ad ad) {
+  // 廣告移除覆蓋螢幕的 overlay 時呼叫。
+  debugPrint('Ad was closed.');
+},
+onAdImpression: (Ad ad) {
+  // 廣告產生曝光時呼叫。
+  debugPrint('Ad recorded an impression.');
+},
+onAdClicked: (Ad ad) {
+  // 發生點擊事件時呼叫。
+  debugPrint('Ad was clicked.');
+},
+onAdWillDismissScreen: (Ad ad) {
+  // 僅 iOS。關閉全螢幕檢視前呼叫。
+  debugPrint('Ad will be dismissed.');
+},</code></pre>
+
+    <h3>重新整理廣告</h3>
+    <p>若在 AdMob UI 中設定廣告單元重新整理，廣告載入失敗時無需再次請求；Google Mobile Ads Flutter Plugin 會遵守 AdMob UI 指定的重新整理率。若未啟用重新整理，則需發出新請求。詳見 <a href="https://support.google.com/admob/answer/3245199" target="_blank" rel="noopener">Use automatic refresh for Banner ads</a>。</p>
+    <div class="callout"><strong>注意：</strong>在 AdMob UI 設定重新整理率時，自動重新整理僅在 Banner 於畫面上可見時才會發生。</div>
+
+    <h3>顯示 Banner 廣告</h3>
+    <p>要將 <code>BannerAd</code> 顯示為 widget，必須在呼叫 <code>load()</code> 之後，以支援的廣告實例化 <code>AdWidget</code>。可在呼叫 <code>load()</code> 前建立 widget，但 <code>load()</code> 必須在加入 widget tree 之前呼叫。</p>
+    <p><code>AdWidget</code> 繼承自 Flutter 的 Widget 類別，可像其他 widget 一樣使用。在 iOS 上，務必將 widget 放置在指定寬度與高度的 widget 內，否則廣告可能無法顯示。<code>BannerAd</code> 可放在尺寸與廣告相符的容器中：</p>
+    <pre class="code" data-lang="dart"><code>if (_bannerAd != null)
+  Align(
+    alignment: Alignment.bottomCenter,
+    child: SafeArea(
+      child: SizedBox(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      ),
+    ),
+  ),</code></pre>
+    <p>當不再需要存取廣告時，必須呼叫 <code>dispose()</code> 釋放。呼叫 <code>dispose()</code> 的最佳時機：在 <code>AdWidget</code> 從 widget tree 移除之後，或在 <code>BannerAdListener.onAdFailedToLoad()</code> 回呼中。</p>
+    <p>完成！應用程式現在已可顯示 Banner 廣告。</p>
+
+    <h3>Android 9 及以下的捲動限制</h3>
+    <p>我們注意到部分執行 Android 9 或更早版本的舊型或效能較低的裝置，在捲動檢視中顯示 inline Banner 廣告時可能有<a href="https://github.com/flutter/flutter/wiki/Hybrid-Composition#performance" target="_blank" rel="noopener">次佳效能</a>。建議僅在 Android 10 或更新版本上使用這類 Banner。固定位置的 Banner（如錨定 Banner）不受影響，可在所有 Android API 層級以最佳效能使用。</p>
+
+    <h3>GitHub 完整範例</h3>
+    <p>完整範例請見 <a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/samples/admob/api_demo" target="_blank" rel="noopener">API demo</a>。</p>
+
+    <h3>其他 Banner 類型</h3>
+    <p>熟悉本節定義的其他 Banner 類型，以用於 Flutter 應用程式：</p>
+    <ul>
+      <li><strong>Inline adaptive banners</strong>：高度可變、相較於錨定自適應 Banner 更大、更高的 Banner；建議用於將 Banner 廣告放置於可捲動內容的應用程式。詳見 <a href="https://developers.google.com/admob/flutter/banner/inline-adaptive.md.txt" target="_blank" rel="noopener">inline adaptive banners</a>。</li>
+      <li><strong>Collapsible banners</strong>：最初以較大的 overlay 呈現、提供按鈕可收合為較小尺寸的 Banner 廣告；可進一步最佳化成效。詳見 <a href="https://developers.google.com/admob/flutter/banner/collapsible.md.txt" target="_blank" rel="noopener">collapsible banner ads</a>。</li>
+    </ul>
+
+    <h2 id="h-9">Interstitial 廣告</h2>
+    <p>Interstitial 廣告是全螢幕廣告，覆蓋其主機應用程式的介面。通常顯示於應用程式流程的自然轉換點，例如活動之間或遊戲關卡之間的暫停。應用程式顯示插屏廣告時，使用者可選擇點擊廣告前往目的地，或關閉廣告返回應用程式。</p>
+    <p>本指南說明如何將插屏廣告整合至 Flutter 應用程式。</p>
+
+    <h3>務必使用測試廣告</h3>
+    <p>建置與測試應用程式時，務必使用測試廣告而非正式廣告。插屏專用的測試廣告單元 ID：</p>
+    <pre class="code" data-lang="text"><code>Android：ca-app-pub-3940256099942544/1033173712
+iOS：    ca-app-pub-3940256099942544/4411468910</code></pre>
+
+    <h3>載入廣告</h3>
+    <pre class="code" data-lang="dart"><code>InterstitialAd.load(
+  adUnitId: "_adUnitId",
+  request: const AdRequest(),
+  adLoadCallback: InterstitialAdLoadCallback(
+    onAdLoaded: (InterstitialAd ad) {
+      // 廣告成功接收時呼叫。
+      debugPrint('Ad was loaded.');
+      // 保留廣告參考以便稍後顯示。
+      _interstitialAd = ad;
+    },
+    onAdFailedToLoad: (LoadAdError error) {
+      // 廣告請求失敗時呼叫。
+      debugPrint('Ad failed to load with error: $error');
+    },
+  ),
+);</code></pre>
+    <p>將 <code>_adUnitId</code> 替換為自己的廣告單元 ID。</p>
+
+    <h3>Interstitial 廣告事件</h3>
+    <p>透過 <code>FullScreenContentCallback</code> 可監聽生命週期事件，例如廣告顯示或關閉。顯示廣告前設定 <code>InterstitialAd.fullScreenContentCallback</code> 以接收通知。以下範例實作各方法：</p>
+    <pre class="code" data-lang="dart"><code>ad.fullScreenContentCallback = FullScreenContentCallback(
+  onAdShowedFullScreenContent: (ad) {
+    // 廣告顯示全螢幕內容時呼叫。
+    debugPrint('Ad showed full screen content.');
+  },
+  onAdFailedToShowFullScreenContent: (ad, err) {
+    // 廣告無法顯示全螢幕內容時呼叫。
+    debugPrint('Ad failed to show full screen content with error: $err');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdDismissedFullScreenContent: (ad) {
+    // 廣告關閉全螢幕內容時呼叫。
+    debugPrint('Ad was dismissed.');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdImpression: (ad) {
+    // 廣告產生曝光時呼叫。
+    debugPrint('Ad recorded an impression.');
+  },
+  onAdClicked: (ad) {
+    // 記錄點擊時呼叫。
+    debugPrint('Ad was clicked.');
+  },
+);</code></pre>
+
+    <h3>顯示 Interstitial 廣告</h3>
+    <p><code>InterstitialAd</code> 以 <code>Overlay</code> 顯示於所有應用程式內容之上並靜態放置，因此無法加入 Flutter widget tree。呼叫 <code>show()</code> 選擇顯示時機：</p>
+    <pre class="code" data-lang="dart"><code>_interstitialAd?.show();</code></pre>
+    <p>呼叫 <code>show()</code> 後，以此方式顯示的廣告無法以程式方式關閉，需使用者輸入。一個 <code>InterstitialAd</code> 只能顯示一次；後續呼叫 show 會觸發 <code>onAdFailedToShowFullScreenContent</code>。</p>
+    <p>當不再需要存取廣告時，必須呼叫 <code>dispose()</code> 釋放。呼叫 <code>dispose()</code> 的最佳時機：在 <code>FullScreenContentCallback.onAdDismissedFullScreenContent</code> 與 <code>FullScreenContentCallback.onAdFailedToShowFullScreenContent</code> 回呼中。</p>
+    <p>完成！應用程式現在已可顯示插屏廣告。</p>
+
+    <h3>後續步驟</h3>
+    <ul>
+      <li>參考 <a href="https://www.youtube.com/watch?v=r2RgFD3Apyo&index=5&list=PLOU2XLYxmsIKX0pUJV3uqp6N3NeHwHh0c" target="_blank" rel="noopener">Interstitial best practices</a> 與 <a href="https://support.google.com/admob/answer/6066980" target="_blank" rel="noopener">interstitial ad guidance</a>。</li>
+      <li>查看 <a href="https://admob.google.com/home/resources/freaking-math-powers-revenue-increase-with-google-admob-support/" target="_blank" rel="noopener">Interstitial ads case study</a>。</li>
+      <li>在 <a href="https://apps.admob.com/" target="_blank" rel="noopener">AdMob UI</a> 建立自己的插屏廣告單元。</li>
+    </ul>
+    <p>完整範例請見 <a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/samples/admob/api_demo" target="_blank" rel="noopener">API demo</a>。</p>
+
+    <h2 id="h-10">Native 廣告</h2>
+    <p>Native 廣告是以平台原生 UI 元件向使用者呈現的廣告資產。在程式碼層面，當 native ad 載入時，應用程式會收到一個 <code>NativeAd</code> 物件，包含其資產；應用程式（而非 Google Mobile Ads Flutter Plugin）負責顯示它們。</p>
+    <p>此廣告格式適用於需要更多控制來設定廣告外觀的場景。若不需要這些功能，請使用其他廣告格式。</p>
+    <p>在 Flutter 應用程式中顯示 native ads 有兩種方式：</p>
+    <ul>
+      <li><strong>Native templates</strong>：使用 Dart API 樣式化的預定義 native templates。</li>
+      <li><strong>Platform setup</strong>：使用 Android 與 iOS 版面工具定義的自訂平台特定版面。</li>
+    </ul>
+
+    <h3>Native templates</h3>
+    <p>有兩種模板類型可選：small 或 medium。每種模板都有 UI 樣式選項，但自訂程度低於 platform setup 實作。</p>
+    <p>詳見 <a href="https://developers.google.com/admob/flutter/native/templates" target="_blank" rel="noopener">Native templates</a>。</p>
+
+    <h3>Platform setup</h3>
+    <p>當需要對 Android 與 iOS 兩個平台的廣告外觀與風格擁有完整控制時，platform setup 更適合，但需要為兩個平台撰寫程式碼。</p>
+    <p>詳見 <a href="https://developers.google.com/admob/flutter/native/platforms" target="_blank" rel="noopener">Platform setup</a>。</p>
+
+    <h2 id="h-11">Rewarded 廣告</h2>
+    <p>Rewarded 廣告是使用者可選擇與之互動以換取應用程式內獎勵的廣告。本指南說明如何將 AdMob rewarded ads 整合進 Flutter 應用程式。</p>
+
+    <h3>務必使用測試廣告</h3>
+    <p>Rewarded 專用的測試廣告單元 ID：</p>
+    <pre class="code" data-lang="text"><code>Android：ca-app-pub-3940256099942544/5224354917
+iOS：    ca-app-pub-3940256099942544/1712485313</code></pre>
+
+    <h3>載入廣告</h3>
+    <pre class="code" data-lang="dart"><code>RewardedAd.load(
+  adUnitId: "_adUnitId",
+  request: const AdRequest(),
+  rewardedAdLoadCallback: RewardedAdLoadCallback(
+    onAdLoaded: (RewardedAd ad) {
+      // 廣告成功接收時呼叫。
+      debugPrint('Ad was loaded.');
+      // 保留廣告參考以便稍後顯示。
+      _rewardedAd = ad;
+    },
+    onAdFailedToLoad: (LoadAdError error) {
+      // 廣告請求失敗時呼叫。
+      debugPrint('Ad failed to load with error: $error');
+    },
+  ),
+);</code></pre>
+    <p>將 <code>_adUnitId</code> 替換為自己的廣告單元 ID。</p>
+
+    <h3>Rewarded 廣告事件</h3>
+    <p>透過 <code>FullScreenContentCallback</code> 可監聽生命週期事件。以下範例實作各方法：</p>
+    <pre class="code" data-lang="dart"><code>ad.fullScreenContentCallback = FullScreenContentCallback(
+  onAdShowedFullScreenContent: (ad) {
+    // 廣告顯示全螢幕內容時呼叫。
+    debugPrint('Ad showed full screen content.');
+  },
+  onAdFailedToShowFullScreenContent: (ad, err) {
+    // 廣告無法顯示全螢幕內容時呼叫。
+    debugPrint('Ad failed to show full screen content with error: $err');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdDismissedFullScreenContent: (ad) {
+    // 廣告關閉全螢幕內容時呼叫。
+    debugPrint('Ad was dismissed.');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdImpression: (ad) {
+    // 廣告產生曝光時呼叫。
+    debugPrint('Ad recorded an impression.');
+  },
+  onAdClicked: (ad) {
+    // 記錄點擊時呼叫。
+    debugPrint('Ad was clicked.');
+  },
+);</code></pre>
+    <div class="callout"><strong>Key Point：</strong>務必實作 <code>onRewardedAdUserEarnedReward</code> 事件以獎勵使用者觀看廣告。</div>
+
+    <h3>顯示廣告</h3>
+    <p><code>RewardedAd</code> 以 Overlay 顯示於所有應用程式內容之上並靜態放置，因此無法加入 Flutter widget tree。呼叫 <code>show()</code> 選擇顯示時機。<code>RewardedAd.show()</code> 接受一個 <code>OnUserEarnedRewardCallback</code>，在使用者獲得獎勵時呼叫。務必實作並獎勵使用者：</p>
+    <pre class="code" data-lang="dart"><code>_rewardedAd?.show(
+  onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) {
+    debugPrint('Reward amount: ${rewardItem.amount}');
+  },
+);</code></pre>
+    <p>呼叫 <code>show()</code> 後，以此方式顯示的廣告無法以程式方式關閉，需使用者輸入。一個 <code>RewardedAd</code> 只能顯示一次；後續呼叫 show 會觸發 <code>onAdFailedToShowFullScreenContent</code>。</p>
+    <p>當不再需要存取廣告時，必須呼叫 <code>dispose()</code> 釋放。呼叫 <code>dispose()</code> 的最佳時機：在 <code>FullScreenContentCallback.onAdDismissedFullScreenContent</code> 與 <code>FullScreenContentCallback.onAdFailedToShowFullScreenContent</code> 回呼中。</p>
+
+    <h3>伺服器端驗證（SSV）回呼（可選）</h3>
+    <p>需要在 <a href="https://developers.google.com/admob/flutter/ssv.md.txt" target="_blank" rel="noopener">server-side verification</a> 回呼中加入額外資料的應用程式，可使用 rewarded ads 的自訂資料功能。設定在 rewarded ad 物件上的任何字串值都會傳遞到 SSV 回呼的 <code>custom_data</code> 查詢參數。若未設定自訂資料值，SSV 回呼中將不會出現 <code>custom_data</code> 查詢參數。</p>
+    <pre class="code" data-lang="dart"><code>RewardedAd.load(
+  adUnitId: "_adUnitId",
+  request: AdRequest(),
+  rewardedAdLoadCallback: RewardedAdLoadCallback(
+    onAdLoaded: (ad) {
+      ServerSideVerificationOptions _options =
+        ServerSideVerificationOptions(
+          customData: 'SAMPLE_CUSTOM_DATA_STRING',
+        );
+      ad.setServerSideOptions(_options);
+      _rewardedAd = ad;
+    },
+    onAdFailedToLoad: (error) {},
+  ),
+);</code></pre>
+    <p>將 <code>SAMPLE_CUSTOM_DATA_STRING</code> 替換為自訂資料。</p>
+    <p>完整範例請見 <a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/samples/admob/api_demo" target="_blank" rel="noopener">API demo</a>。</p>
+
+    <h2 id="h-12">Rewarded interstitial 廣告</h2>
+    <p>Rewarded interstitial 是一種獎勵廣告格式，可在應用程式自然轉換期間自動顯示廣告並提供獎勵。與 rewarded ads 不同，使用者無需選擇加入即可觀看 rewarded interstitial。本指南說明如何將 AdMob rewarded interstitial ads 整合進 Flutter 應用程式。</p>
+
+    <h3>前置需求</h3>
+    <ul>
+      <li>安裝 Flutter plugin 1.1.0 或更高版本</li>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads Flutter Plugin</a>：Flutter 應用程式必須已匯入 Google Mobile Ads Flutter Plugin</li>
+    </ul>
+
+    <h3>務必使用測試廣告</h3>
+    <p>Rewarded interstitial 專用的測試廣告單元 ID：</p>
+    <pre class="code" data-lang="text"><code>Android：ca-app-pub-3940256099942544/5354046379
+iOS：    ca-app-pub-3940256099942544/6978759866</code></pre>
+
+    <h3>載入廣告</h3>
+    <pre class="code" data-lang="dart"><code>RewardedInterstitialAd.load(
+  adUnitId: "_adUnitId",
+  request: const AdRequest(),
+  rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+    onAdLoaded: (RewardedInterstitialAd ad) {
+      // 廣告成功接收時呼叫。
+      debugPrint('Ad was loaded.');
+      // 保留廣告參考以便稍後顯示。
+      _rewardedInterstitialAd = ad;
+    },
+    onAdFailedToLoad: (LoadAdError error) {
+      // 廣告請求失敗時呼叫。
+      debugPrint('Ad failed to load with error: $error');
+    },
+  ),
+);</code></pre>
+    <p>將 <code>_adUnitId</code> 替換為自己的廣告單元 ID。</p>
+
+    <h3>Rewarded interstitial 廣告事件</h3>
+    <p>透過 <code>FullScreenContentCallback</code> 可監聽生命週期事件。以下範例實作各方法：</p>
+    <pre class="code" data-lang="dart"><code>ad.fullScreenContentCallback = FullScreenContentCallback(
+  onAdShowedFullScreenContent: (ad) {
+    // 廣告顯示全螢幕內容時呼叫。
+    debugPrint('Ad showed full screen content.');
+  },
+  onAdFailedToShowFullScreenContent: (ad, err) {
+    // 廣告無法顯示全螢幕內容時呼叫。
+    debugPrint('Ad failed to show full screen content with error: $err');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdDismissedFullScreenContent: (ad) {
+    // 廣告關閉全螢幕內容時呼叫。
+    debugPrint('Ad was dismissed.');
+    // 釋放資源。
+    ad.dispose();
+  },
+  onAdImpression: (ad) {
+    // 廣告產生曝光時呼叫。
+    debugPrint('Ad recorded an impression.');
+  },
+  onAdClicked: (ad) {
+    // 記錄點擊時呼叫。
+    debugPrint('Ad was clicked.');
+  },
+);</code></pre>
+
+    <h3>顯示廣告</h3>
+    <div class="callout"><strong>Key Point：</strong>顯示 rewarded interstitial 廣告給使用者之前，必須先呈現介紹畫面，提供清楚的獎勵訊息並允許使用者在廣告開始前跳過。詳見 <a href="https://support.google.com/admob/answer/9884467" target="_blank" rel="noopener">Learn more</a>。</div>
+    <p><code>RewardedInterstitialAd</code> 以 Overlay 顯示於所有應用程式內容之上並靜態放置，因此無法加入 Flutter widget tree。呼叫 <code>show()</code> 選擇顯示時機。<code>RewardedInterstitialAd.show()</code> 接受一個 <code>OnUserEarnedRewardCallback</code>，在使用者獲得獎勵時呼叫。務必實作並獎勵使用者：</p>
+    <pre class="code" data-lang="dart"><code>_rewardedInterstitialAd?.show(
+  onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) {
+    debugPrint('Reward amount: ${rewardItem.amount}');
+  },
+);</code></pre>
+    <p>呼叫 <code>show()</code> 後，以此方式顯示的廣告無法以程式方式關閉，需使用者輸入。一個 <code>RewardedInterstitialAd</code> 只能顯示一次；後續呼叫 show 會觸發 <code>onAdFailedToShowFullScreenContent</code>。</p>
+    <p>當不再需要存取廣告時，必須呼叫 <code>dispose()</code> 釋放。呼叫 <code>dispose()</code> 的最佳時機：在 <code>FullScreenContentCallback.onAdDismissedFullScreenContent</code> 與 <code>FullScreenContentCallback.onAdFailedToShowFullScreenContent</code> 回呼中。</p>
+
+    <h3>伺服器端驗證（SSV）回呼（可選）</h3>
+    <p>需要在 <a href="https://developers.google.com/admob/flutter/ssv.md.txt" target="_blank" rel="noopener">server-side verification</a> 回呼中加入額外資料的應用程式，可使用 rewarded ads 的自訂資料功能。設定在 rewarded ad 物件上的任何字串值都會傳遞到 SSV 回呼的 <code>custom_data</code> 查詢參數。</p>
+    <pre class="code" data-lang="dart"><code>RewardedInterstitialAd.load(
+  adUnitId: "_adUnitId",
+  request: AdRequest(),
+  rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+    onAdLoaded: (ad) {
+      ServerSideVerificationOptions _options =
+        ServerSideVerificationOptions(
+          customData: 'SAMPLE_CUSTOM_DATA_STRING',
+        );
+      ad.setServerSideOptions(_options);
+      _rewardedInterstitialAd = ad;
+    },
+    onAdFailedToLoad: (error) {},
+  ),
+);</code></pre>
+    <p>將 <code>SAMPLE_CUSTOM_DATA_STRING</code> 替換為自訂資料。</p>
+    <p>完整範例請見 <a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/samples/admob/api_demo" target="_blank" rel="noopener">API demo</a>。</p>
+
+    <h2 id="h-13">App open 廣告</h2>
+    <p>App open 廣告是一種特殊廣告格式，供希望變現應用程式載入畫面的發佈商使用。App open 廣告可隨時關閉，設計用於使用者將應用程式帶到前景時顯示。</p>
+    <p>App open 廣告會自動顯示小型品牌區域，讓使用者知道仍在您的應用程式中。</p>
+
+    <h3>前置需求</h3>
+    <ul>
+      <li>安裝 Flutter plugin 0.13.6 或更高版本</li>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads Flutter Plugin</a>：Flutter 應用程式必須已匯入 Google Mobile Ads Flutter Plugin</li>
+    </ul>
+
+    <h3>務必使用測試廣告</h3>
+    <p>App open 專用的測試廣告單元 ID：</p>
+    <pre class="code" data-lang="text"><code>Android：ca-app-pub-3940256099942544/9257395921
+iOS：    ca-app-pub-3940256099942544/5575463023</code></pre>
+
+    <h3>實作步驟</h3>
+    <p>整合 app open ads 的主要步驟：</p>
+    <ol>
+      <li>建立工具類別，在需要顯示前提前載入廣告。</li>
+      <li>載入廣告。</li>
+      <li>註冊回呼並顯示廣告。</li>
+      <li>訂閱 <code>AppStateEventNotifier.appStateStream</code>，在前景事件時顯示廣告。</li>
+    </ol>
+
+    <h3>建立工具類別</h3>
+    <p>建立名為 <code>AppOpenAdManager</code> 的新類別來載入廣告。此類別管理實例變數以追蹤已載入的廣告與每個平台的廣告單元 ID：</p>
+    <pre class="code" data-lang="dart"><code>import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io' show Platform;
+
+class AppOpenAdManager {
+  String adUnitId = Platform.isAndroid
+    ? 'ca-app-pub-3940256099942544/9257395921'
+    : 'ca-app-pub-3940256099942544/5575463023';
+
+  AppOpenAd? _appOpenAd;
+  bool _isShowingAd = false;
+
+  /// Load an AppOpenAd.
+  void loadAd() {
+    // We will implement this below.
+  }
+
+  /// Whether an ad is available to be shown.
+  bool get isAdAvailable {
+    return _appOpenAd != null;
+  }
+}</code></pre>
+
+    <h3>載入廣告</h3>
+    <p>App open 廣告需在使用者進入應用程式前準備就緒。實作工具類別以提前請求廣告。使用 <code>AppOpenAd</code> 類別的 <code>load</code> 方法載入廣告，需要廣告單元 ID、方向模式、<code>AdRequest</code> 物件與完成處理器：</p>
+    <pre class="code" data-lang="dart"><code>void loadAd() {
+  AppOpenAd.load(
+    adUnitId: adUnitId,
+    adRequest: AdRequest(),
+    adLoadCallback: AppOpenAdLoadCallback(
+      onAdLoaded: (ad) {
+        _appOpenAd = ad;
+      },
+      onAdFailedToLoad: (error) {
+        print('AppOpenAd failed to load: $error');
+        // Handle the error.
+      },
+    ),
+  );
+}</code></pre>
+
+    <h3>顯示廣告與全螢幕回呼</h3>
+    <p>顯示廣告前，為每個要監聽的廣告事件註冊 <code>FullScreenContentCallback</code>：</p>
+    <pre class="code" data-lang="dart"><code>void showAdIfAvailable() {
+  if (!isAdAvailable) {
+    print('Tried to show ad before available.');
+    loadAd();
+    return;
+  }
+  if (_isShowingAd) {
+    print('Tried to show ad while already showing an ad.');
+    return;
+  }
+  // Set the fullScreenContentCallback and show the ad.
+  _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
+    onAdShowedFullScreenContent: (ad) {
+      _isShowingAd = true;
+      print('$ad onAdShowedFullScreenContent');
+    },
+    onAdFailedToShowFullScreenContent: (ad, error) {
+      print('$ad onAdFailedToShowFullScreenContent: $error');
+      _isShowingAd = false;
+      ad.dispose();
+      _appOpenAd = null;
+    },
+    onAdDismissedFullScreenContent: (ad) {
+      print('$ad onAdDismissedFullScreenContent');
+      _isShowingAd = false;
+      ad.dispose();
+      _appOpenAd = null;
+      loadAd();
+    },
+  );
+}</code></pre>
+    <p>若使用者透過點擊 app open 廣告離開應用程式後返回，務必確保不會再次呈現另一個 app open 廣告。</p>
+
+    <h3>監聽前景事件</h3>
+    <p>為接收應用程式前景事件通知，需訂閱 <code>AppStateEventNotifier.appStateStream</code> 並監聽 <code>foreground</code> 事件：</p>
+    <pre class="code" data-lang="dart"><code>class AppLifecycleReactor {
+  final AppOpenAdManager appOpenAdManager;
+
+  AppLifecycleReactor({required this.appOpenAdManager});
+
+  void listenToAppStateChanges() {
+    AppStateEventNotifier.startListening();
+    AppStateEventNotifier.appStateStream
+        .forEach((state) => _onAppStateChanged(state));
+  }
+
+  void _onAppStateChanged(AppState appState) {
+    // 嘗試顯示 app open ad，若應用程式正在恢復且未顯示 app open ad。
+    if (appState == AppState.foreground) {
+      appOpenAdManager.showAdIfAvailable();
+    }
+  }
+}</code></pre>
+    <p>初始化 <code>AppLifecycleReactor</code> 並開始監聽應用程式生命週期變更。例如在首頁：</p>
+    <pre class="code" data-lang="dart"><code>void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+  runApp(MyApp());
+}</code></pre>
+
+    <h3>廣告過期</h3>
+    <div class="callout"><strong>Key Point：</strong>App open beta 中的廣告參考將在四小時後逾時。請求時間四小時後呈現的廣告將不再有效，可能無法賺取收益。此時間限制正在審慎考慮中，未來 beta 版本的 app open 格式可能會變更。</div>
+    <p>為確保不顯示過期廣告，請在 <code>AppOpenAdManager</code> 加入時間戳記，以檢查廣告載入後經過的時間。然後使用該時間戳記判斷廣告是否仍有效：</p>
+    <pre class="code" data-lang="dart"><code>class AppOpenAdManager {
+  ...
+  /// 載入與顯示廣告之間允許的最長持續時間。
+  final Duration maxCacheDuration = Duration(hours: 4);
+  /// 記錄載入時間，避免顯示過期廣告。
+  DateTime? _appOpenLoadTime;
+  ...
+
+  void loadAd() {
+    AppOpenAd.load(
+      adUnitId: adUnitId,
+      orientation: AppOpenAd.orientationPortrait,
+      adRequest: AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(
+        onAdLoaded: (ad) {
+          print('$ad loaded');
+          _appOpenLoadTime = DateTime.now();
+          _appOpenAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          print('AppOpenAd failed to load: $error');
+        },
+      ),
+    );
+  }
+
+  void showAdIfAvailable() {
+    if (!isAdAvailable) {
+      print('Tried to show ad before available.');
+      loadAd();
+      return;
+    }
+    if (_isShowingAd) {
+      print('Tried to show ad while already showing an ad.');
+      return;
+    }
+    if (DateTime.now().subtract(maxCacheDuration).isAfter(_appOpenLoadTime!)) {
+      print('Maximum cache duration exceeded. Loading another ad.');
+      _appOpenAd!.dispose();
+      _appOpenAd = null;
+      loadAd();
+      return;
+    }
+    // Set the fullScreenContentCallback and show the ad.
+    _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(...);
+    _appOpenAd!.show();
+  }
+}</code></pre>
+
+    <h3>冷啟動與載入畫面</h3>
+    <p>至此文件皆假設僅在使用者將應用程式帶到前景（應用程式先前已暫停於記憶體中）時顯示 app open ads。「冷啟動」發生於應用程式啟動但先前未暫停於記憶體中。</p>
+    <p>冷啟動的範例是使用者首次開啟應用程式。冷啟動時，不會有先前已載入並可立即顯示的 app open ad。請求廣告與收到廣告之間的延遲可能造成使用者在被意外的不相關廣告打斷前短暫使用應用程式，應避免此不良使用者體驗。</p>
+    <p>冷啟動時使用 app open ads 的首選方式是使用載入畫面載入遊戲或應用程式資產，並僅從載入畫面顯示廣告。若應用程式已完成載入並已將使用者送至主要內容，請勿顯示廣告。</p>
+    <div class="callout"><strong>Key Point：</strong>為在顯示 app open 廣告期間繼續載入應用程式資產，務必在背景執行緒載入資產。</div>
+
+    <h3>最佳實踐</h3>
+    <p>App open ads 有助於在應用程式首次啟動與應用程式切換時變現載入畫面，但請記住最佳實踐以確保使用者享受使用應用程式：</p>
+    <ul>
+      <li>在使用者使用應用程式數次後再顯示第一個 app open ad。</li>
+      <li>在使用者原本會等待應用程式載入的時機顯示 app open ads。</li>
+      <li>若 app open ad 下方有載入畫面，且載入畫面在廣告關閉前完成載入，可在 <code>onAdDismissedFullScreenContent</code> 事件處理器中關閉載入畫面。</li>
+    </ul>
+    <p>完整範例請見 <a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/samples/admob/api_demo" target="_blank" rel="noopener">API demo</a>。</p>
+
+    <h2 id="h-14">Mediation（中介）</h2>
+    <p>AdMob Mediation 是一項功能，讓應用程式能從多個來源投放廣告，包括 AdMob Network 與第三方廣告來源，集中於一處。AdMob Mediation 透過向多個網路發送廣告請求，協助最大化填充率並提升變現，以找到最佳可用網路投放廣告。詳見 <a href="https://admob.google.com/home/resources/cookapps-grows-ad-revenue-86-times-with-admob-rewarded-ads-and-mediation/" target="_blank" rel="noopener">Case study</a>。</p>
+
+    <h3>前置需求</h3>
+    <div class="callout"><strong>Important：</strong>請確認具備完成 mediation 設定所需的帳號權限，包括 inventory management、app access 與 privacy and messaging 功能的存取權。詳見 <a href="https://support.google.com/admob/answer/2784628" target="_blank" rel="noopener">Manage user access to your account</a>。</div>
+    <p>在為某個廣告格式整合 mediation 之前，需先將該廣告格式整合進應用程式：</p>
+    <ul>
+      <li><a href="#h-8">Banner 廣告</a></li>
+      <li><a href="#h-9">Interstitial 廣告</a></li>
+      <li><a href="#h-10">Native 廣告</a></li>
+      <li><a href="#h-11">Rewarded 廣告</a></li>
+      <li><a href="#h-12">Rewarded interstitial 廣告</a></li>
+    </ul>
+    <p>初次接觸 mediation？請閱讀 <a href="https://support.google.com/admob/answer/3063564" target="_blank" rel="noopener">Overview of AdMob Mediation</a>。</p>
+
+    <h3>初始化 Google Mobile Ads Flutter Plugin</h3>
+    <p>快速入門指南說明如何<a href="#h-6">初始化 Google Mobile Ads Flutter Plugin</a>。在該初始化呼叫期間，mediation adapters 也會被初始化。載入廣告前務必等待初始化完成，以確保每個廣告網路在第一個廣告請求時都能完全參與。</p>
+    <div class="callout"><strong>Important：</strong>Bidding adapters 需要明確初始化 Google Mobile Ads Flutter Plugin。</div>
+    <p>以下範例程式碼示範如何在發出廣告請求前檢查每個 adapter 的初始化狀態：</p>
+    <pre class="code" data-lang="dart"><code>void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize()
+    .then((initializationStatus) {
+      initializationStatus.adapterStatuses.forEach((key, value) {
+        debugPrint('Adapter status for $key: ${value.description}');
+      });
+    });
+  runApp(MyApp());
+}</code></pre>
+
+    <h3>更新 gradle 設定（僅 Android）</h3>
+    <p>在 <code>settings.gradle</code> 檔案加入以下行，以便使用 plugin 的 Android API：</p>
+    <pre class="code" data-lang="gradle"><code>def flutterSdkPath = {
+    def properties = new Properties()
+    file("local.properties").withInputStream { properties.load(it) }
+    def flutterSdkPath = properties.getProperty("flutter.sdk")
+    assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+    return flutterSdkPath
+}()
+
+includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")</code></pre>
+
+    <h3>新增合作網路相依</h3>
+    <p>Mediation adapters 與其相依需加入 Android 與 iOS 專案。可透過更新 Android 的 app 層 <code>build.gradle</code> 與 iOS 的 <code>Podfile</code> 來加入。Google 為 <a href="https://github.com/googleads/googleads-mobile-android-mediation/tree/master/ThirdPartyAdapters" target="_blank" rel="noopener">Android</a> 與 <a href="https://github.com/googleads/googleads-mobile-ios-mediation/tree/main/adapters" target="_blank" rel="noopener">iOS</a> 提供開源 adapters。</p>
+    <p>詳見各合作網路的 <a href="https://developers.google.com/admob/android/choose-networks.md.txt#network_details" target="_blank" rel="noopener">Android</a> 與 <a href="https://developers.google.com/admob/ios/choose-networks.md.txt#network_details" target="_blank" rel="noopener">iOS</a> 文件，以了解如何在應用程式中加入其 adapter。</p>
+
+    <h3>檢查載入廣告的廣告網路 adapter 類別</h3>
+    <p>以下範例程式碼示範如何記錄 Banner 廣告的廣告網路類別名稱：</p>
+    <pre class="code" data-lang="dart"><code>final bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: '&lt;your-ad-unit&gt;',
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('$ad loaded: ${ad.responseInfo?.mediationAdapterClassName}');
+        },
+      ),
+      request: AdRequest(),
+    );</code></pre>
+
+    <h3>搭配 AdMob Mediation 使用 Banner 廣告</h3>
+    <p>務必在所有第三方廣告來源 UI 中，停用用於 AdMob Mediation 的 Banner 廣告單元的重新整理。這可防止双重重新整理，因為 AdMob 也會根據 Banner 廣告單元的重新整理率觸發重新整理。</p>
+
+    <h3>搭配 AdMob Mediation 使用 Native 廣告</h3>
+    <p>實作 native mediation 時需考慮以下最佳實踐：</p>
+    <ul>
+      <li><strong>Native ad presentation policy</strong>：每個廣告網路都有自己的政策。使用 mediation 時，應用程式仍需遵守提供該廣告的 mediated network 的政策。</li>
+    </ul>
+
+    <h3>美國各州隱私法與 GDPR</h3>
+    <p>若需遵守 <a href="https://support.google.com/admob/answer/9561022" target="_blank" rel="noopener">U.S. states privacy laws</a> 或 <a href="https://support.google.com/admob/answer/7666366" target="_blank" rel="noopener">General Data Protection Regulation (GDPR)</a>，請依照 <a href="https://support.google.com/admob/answer/10860309" target="_blank" rel="noopener">US state regulations settings</a> 或 <a href="https://support.google.com/admob/answer/10113004#adding_ad_partners_to_published_gdpr_messages" target="_blank" rel="noopener">GDPR settings</a> 的步驟，將 mediation partners 加入 AdMob Privacy &amp; messaging 的 US states 或 GDPR ad partners 清單。否則 partners 可能無法在應用程式中投放廣告。</p>
+    <p>詳見啟用 <a href="https://developers.google.com/admob/flutter/privacy/us-states" target="_blank" rel="noopener">restricted data processing (RDP)</a> 與使用 <a href="https://developers.google.com/admob/flutter/privacy.md.txt" target="_blank" rel="noopener">Google User Messaging Platform (UMP) SDK</a> 取得 GDPR 同意。</p>
+
+    <h2 id="h-15">Ad Inspector</h2>
+    <p>Ad Inspector 是一個應用程式內 overlay，可讓您直接在行動應用程式中對測試廣告請求進行即時分析。Ad Inspector 功能列表請見 <a href="https://support.google.com/admob/answer/10159602" target="_blank" rel="noopener">Test your app with ad inspector</a>。</p>
+    <div class="callout"><strong>Warning：</strong>啟用 ad inspector 會增加測試裝置上 Google Mobile Ads Flutter Plugin 的記憶體使用量。</div>
+    <p>本指南涵蓋以下內容：</p>
+    <ul>
+      <li><a href="https://developers.google.com/admob/flutter/ad-inspector/launch-ad-inspector.md.txt" target="_blank" rel="noopener">Launch ad inspector</a></li>
+      <li><a href="https://developers.google.com/admob/flutter/ad-inspector/verify-adapter-integrations.md.txt" target="_blank" rel="noopener">Verify adapter integrations</a></li>
+      <li><a href="https://developers.google.com/admob/flutter/ad-inspector/test-ad-units.md.txt" target="_blank" rel="noopener">Test ad units</a></li>
+      <li><a href="https://developers.google.com/admob/flutter/ad-inspector/troubleshoot-ad-units.md.txt" target="_blank" rel="noopener">Troubleshoot ad units</a></li>
+      <li><a href="https://developers.google.com/admob/flutter/ad-inspector/troubleshoot-privacy-settings.md.txt" target="_blank" rel="noopener">Troubleshoot privacy settings</a></li>
+    </ul>
+
+    <h3>前置需求</h3>
+    <p>使用 ad inspector 前，必須完成以下工作：</p>
+    <ul>
+      <li>建立 AdMob 帳號。詳見 <a href="https://support.google.com/admob/answer/7356219" target="_blank" rel="noopener">Sign up for AdMob</a>。</li>
+      <li><a href="https://support.google.com/admob/answer/9989980" target="_blank" rel="noopener">Set up an app in AdMob</a>。</li>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads Flutter Plugin</a>。</li>
+      <li>安裝 Google Mobile Ads Flutter Plugin 1.3.0 或更高版本。</li>
+      <li>將裝置加入為測試裝置。詳見 <a href="https://developers.google.com/admob/flutter/test-ads.md.txt#enable_test_devices" target="_blank" rel="noopener">Enable test devices</a>。</li>
+    </ul>
+    <div class="callout"><strong>Important：</strong>Ad inspector 僅在<strong>測試裝置</strong>上啟動。</div>
+
+    <h2 id="h-16">廣告載入錯誤</h2>
+    <p>當廣告載入失敗時，會呼叫失敗回呼並提供一個 <code>LoadAdError</code> 物件。</p>
+    <p>以下程式碼片段示範 rewarded ad 載入失敗時如何取得錯誤資訊：</p>
+    <pre class="code" data-lang="dart"><code>onAdFailedToLoad: (ad, loadAdError) {
+  // 取得錯誤來源的網域。
+  String domain = loadAdError.domain;
+
+  // 取得錯誤代碼。請參閱
+  // https://developers.google.com/admob/android/reference/com/google/android/gms/ads/AdRequest
+  // 與 https://developers.google.com/admob/ios/api/reference/Enums/GADErrorCode
+  // 以取得可能的代碼清單。
+  int code = loadAdError.code;
+
+  // 方便記錄的字串，摘要錯誤。
+  String message = loadAdError.message;
+
+  // 取得回應資訊，可能包含 mediation 請求的結果。
+  ResponseInfo? responseInfo = loadAdError.responseInfo;
+}</code></pre>
+    <p>此資訊可用於更準確地判斷廣告載入失敗的原因。特別是對於 iOS 上網域 <code>com.google.admob</code> 與 Android 上網域 <code>com.google.android.gms.ads</code> 的錯誤，可查閱 <a href="https://support.google.com/admob/answer/9905175" target="_blank" rel="noopener">此說明中心文章</a> 以取得更詳細的說明與可能的解決動作。</p>
+
+    <h2 id="h-17">回應資訊（ResponseInfo）</h2>
+    <p>為除錯與記錄目的，成功載入的廣告會提供一個 <code>ResponseInfo</code> 物件。此物件包含所載入廣告的相關資訊。每個廣告格式類別都有 <code>responseInfo</code> 屬性，於載入後填入。</p>
+    <p><code>ResponseInfo</code> 的屬性包括：</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>屬性</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>adapterResponses</code></td><td><code>AdapterResponseInfo</code> 清單，包含廣告回應中每個 adapter 的中繼資料。可用於除錯 waterfall mediation 與 bidding 執行。清單順序與此廣告請求的 mediation waterfall 順序一致。詳見 <a href="#adapter-response-info">Adapter Response Info</a>。</td></tr>
+        <tr><td><code>loadedAdapterResponseInfo</code></td><td>回傳載入廣告的 adapter 對應的 <code>AdapterResponseInfo</code>。</td></tr>
+        <tr><td><code>mediationAdapterClassName</code></td><td>回傳載入廣告的廣告網路的 mediation adapter 類別名稱。</td></tr>
+        <tr><td><code>responseId</code></td><td>回應識別碼，為廣告回應的唯一識別碼。可用於在 <a href="https://support.google.com/admob/answer/3480906" target="_blank" rel="noopener">Ads Review Center (ARC)</a> 中識別並封鎖廣告。</td></tr>
+        <tr><td><code>responseExtras</code></td><td><strong>Beta：</strong>此 API 處於 beta 階段。回傳值可能在 SDK 發佈前變更。回傳廣告回應的額外資訊。Extras 可能包含以下鍵：<code>mediation_group_name</code>（mediation group 名稱）、<code>mediation_ab_test_name</code>（mediation A/B test 名稱，若適用）、<code>mediation_ab_test_variant</code>（mediation A/B test 使用的變體，若適用）。</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="adapter-response-info">Adapter Response Info</h3>
+    <p><code>AdapterResponseInfo</code> 包含廣告回應中每個 adapter 的中繼資料，可用於除錯 waterfall mediation 與 bidding 執行。清單順序與廣告請求的 mediation waterfall 順序一致。</p>
+    <p>每個廣告網路的 <code>AdapterResponseInfo</code> 提供以下屬性：</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>屬性</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td><code>adapterClassName</code></td><td>識別廣告網路的類別名稱。</td></tr>
+        <tr><td><code>credentials</code></td><td>AdMob UI 中指定的 adapter 憑證的字串描述。</td></tr>
+        <tr><td><code>adError</code></td><td>與該網路請求相關的錯誤。若網路成功載入廣告或未嘗試該網路，則為 null。</td></tr>
+        <tr><td><code>latencyMillis</code></td><td>廣告網路載入廣告所花的時間。若未嘗試該網路，則為 0。</td></tr>
+        <tr><td><code>description</code></td><td><code>AdapterResponseInfo</code> 的方便記錄字串版本。</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2 id="h-18">伺服器端驗證（SSV）</h2>
+    <p>Server-side verification 回呼是 URL 請求，由 Google 發送給外部系統，通知其使用者應因與 rewarded 或 rewarded interstitial 廣告互動而獲得獎勵。Rewarded SSV 提供額外保護層，防止偽造客戶端回呼以獎勵使用者。</p>
+    <p>本指南說明如何使用 <a href="https://github.com/tink-crypto/tink-java-apps" target="_blank" rel="noopener">Tink Java Apps</a> 第三方密碼學函式庫驗證 rewarded SSV 回呼，以確保回呼中的查詢參數為合法值。雖然本指南使用 Tink，但也可使用任何支援 <a href="https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm" target="_blank" rel="noopener">ECDSA</a> 的第三方函式庫。也可使用 AdMob UI 中的<a href="https://support.google.com/admob/answer/9603226" target="_blank" rel="noopener">測試工具</a>測試伺服器。</p>
+    <div class="callout"><strong>Key Point：</strong>本指南並非意圖展示每種語言的伺服器端回呼驗證範例。若不熟悉將這些概念應用於所選的 ECDSA 函式庫，建議使用 Google Mobile Ads SDK 的<a href="https://developers.google.com/admob/flutter/rewarded.md.txt#show_the_ad" target="_blank" rel="noopener">客戶端獎勵回呼</a>來獎勵使用者。</div>
+
+    <h3>先決條件</h3>
+    <ul>
+      <li>在廣告單元啟用 <a href="https://support.google.com/admob/answer/7665911" target="_blank" rel="noopener">rewarded server-side verification</a>。</li>
+    </ul>
+
+    <h3>使用 Tink Java Apps 的 RewardedAdsVerifier</h3>
+    <p><a href="https://github.com/tink-crypto/tink-java-apps" target="_blank" rel="noopener">Tink Java Apps</a> GitHub 儲存庫包含一個 <a href="https://github.com/tink-crypto/tink-java-apps/blob/main/rewardedads/src/main/java/com/google/crypto/tink/apps/rewardedads/RewardedAdsVerifier.java" target="_blank" rel="noopener">RewardedAdsVerifier</a> 輔助類別，可減少驗證 rewarded SSV 回呼所需的程式碼。使用此類別可透過以下程式碼驗證回呼 URL：</p>
+    <pre class="code" data-lang="java"><code>RewardedAdsVerifier verifier = new RewardedAdsVerifier.Builder()
+    .fetchVerifyingPublicKeysWith(
+        RewardedAdsVerifier.KEYS_DOWNLOADER_INSTANCE_PROD)
+    .build();
+String rewardUrl = ...;
+verifier.verify(rewardUrl);</code></pre>
+    <p>若 <code>verify()</code> 方法執行而不拋出例外，回呼 URL 即驗證成功。<a href="#rewarding-the-user">Rewarding the user</a> 章節詳述獎勵使用者的最佳實踐。如需了解此類別驗證 rewarded SSV 回呼所執行的步驟細節，請參閱<a href="#manual-verification">Manual verification of rewarded SSV</a> 章節。</p>
+
+    <h3>SSV 回呼參數</h3>
+    <p>Server-side verification 回呼包含描述 rewarded 廣告互動的查詢參數。參數名稱、說明與範例值如下。參數按字母順序傳送。</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>參數名稱</th><th>說明</th><th>範例值</th></tr></thead>
+      <tbody>
+        <tr><td><code>ad_network</code></td><td>投放此廣告的廣告來源識別碼。ID 對應的廣告來源名稱請見<a href="#ad-source">Ad source identifiers</a> 章節。</td><td>1953547073528090325</td></tr>
+        <tr><td><code>ad_unit</code></td><td>用於請求 rewarded 廣告的 AdMob 廣告單元 ID。</td><td>2747237135</td></tr>
+        <tr><td><code>custom_data</code></td><td>由 <code>customData</code> 提供的自訂資料字串。若應用程式未提供自訂資料字串，此查詢參數值將不會出現在 SSV 回呼中。</td><td>SAMPLE_CUSTOM_DATA_STRING</td></tr>
+        <tr><td><code>key_id</code></td><td>用於驗證 SSV 回呼的金鑰。此值對應 <a href="https://gstatic.com/admob/reward/verifier-keys.json" target="_blank" rel="noopener">AdMob key server</a> 提供的公鑰。</td><td>1234567890</td></tr>
+        <tr><td><code>reward_amount</code></td><td>廣告單元設定中指定的獎勵數量。</td><td>5</td></tr>
+        <tr><td><code>reward_item</code></td><td>廣告單元設定中指定的獎勵項目。</td><td>coins</td></tr>
+        <tr><td><code>signature</code></td><td>AdMob 產生的 SSV 回呼簽章。</td><td>MEUCIQCLJS_s4ia_sN06HqzeW7Wc3nhZi4RlW3qV0oO-6AIYdQIgGJEh-rzKreO-paNDbSCzWGMtmgJHYYW9k2_icM9LFMY</td></tr>
+        <tr><td><code>timestamp</code></td><td>使用者獲得獎勵的時間戳（Epoch time，毫秒）。</td><td>1507770365237823</td></tr>
+        <tr><td><code>transaction_id</code></td><td>AdMob 產生的每次獎勵授予事件的唯一十六進位識別碼。</td><td>18fa792de1bca816048293fc71035638</td></tr>
+        <tr><td><code>user_id</code></td><td>由 <code>userId</code> 提供的使用者識別碼。若應用程式未提供使用者識別碼，此查詢參數將不會出現在 SSV 回呼中。</td><td>1234567</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="ad-source">Ad source identifiers</h3>
+    <p>廣告來源名稱與 ID：</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>廣告來源名稱</th><th>廣告來源 ID</th></tr></thead>
+      <tbody>
+        <tr><td>Ad Generation (bidding)</td><td><code>1477265452970951479</code></td></tr>
+        <tr><td>Adagio (bidding)</td><td><code>11706077846011201784</code></td></tr>
+        <tr><td>AdMob Network</td><td><code>5450213213286189855</code></td></tr>
+        <tr><td>AdMob Network Waterfall</td><td><code>1215381445328257950</code></td></tr>
+        <tr><td>AppLovin</td><td><code>1063618907739174004</code></td></tr>
+        <tr><td>AppLovin (bidding)</td><td><code>1328079684332308356</code></td></tr>
+        <tr><td>Bidease (bidding)</td><td><code>3670825090829827805</code></td></tr>
+        <tr><td>BidMachine (bidding)</td><td><code>7943972370566394673</code></td></tr>
+        <tr><td>Bigo Ads SDK (bidding)</td><td><code>504039719704837539</code></td></tr>
+        <tr><td>Chartboost</td><td><code>2873236629771172317</code></td></tr>
+        <tr><td>Chocolate Platform (bidding)</td><td><code>6432849193975106527</code></td></tr>
+        <tr><td>Custom Event</td><td><code>18351550913290782395</code></td></tr>
+        <tr><td>DT Exchange（2022-09-21 前稱 Fyber Marketplace）</td><td><code>2179455223494392917</code></td></tr>
+        <tr><td>DT Exchange (bidding)</td><td><code>8189833498765234879</code></td></tr>
+        <tr><td>Equativ (bidding)（2023-01-12 前稱 Smart Adserver）</td><td><code>5970199210771591442</code></td></tr>
+        <tr><td>Fluct (bidding)</td><td><code>8419777862490735710</code></td></tr>
+        <tr><td>i-mobile</td><td><code>5208827440166355534</code></td></tr>
+        <tr><td>Improve Digital (bidding)</td><td><code>159382223051638006</code></td></tr>
+        <tr><td>Index Exchange (bidding)</td><td><code>4100650709078789802</code></td></tr>
+        <tr><td>InMobi</td><td><code>7681903010231960328</code></td></tr>
+        <tr><td>InMobi (SDK) (bidding)</td><td><code>8468954295581492586</code></td></tr>
+        <tr><td>InMobi Exchange (bidding)</td><td><code>5264320421916134407</code></td></tr>
+        <tr><td>ironSource Ads</td><td><code>6925240245545091930</code></td></tr>
+        <tr><td>ironSource Ads (bidding)</td><td><code>1643326773739866623</code></td></tr>
+        <tr><td>Liftoff Monetize（2023-01-30 前稱 Vungle）</td><td><code>1953547073528090325</code></td></tr>
+        <tr><td>Liftoff Monetize (bidding)（2023-01-30 前稱 Vungle (bidding)）</td><td><code>4692500501762622185</code></td></tr>
+        <tr><td>LY Ads Network</td><td><code>3025503711505004547</code></td></tr>
+        <tr><td>LY Ads Network (bidding)</td><td><code>2615812619460460513</code></td></tr>
+        <tr><td>Magnite DV+ (bidding)</td><td><code>3993193775968767067</code></td></tr>
+        <tr><td>maio</td><td><code>7505118203095108657</code></td></tr>
+        <tr><td>Media.net (bidding)</td><td><code>2127936450554446159</code></td></tr>
+        <tr><td>Mediated house ads</td><td><code>6060308706800320801</code></td></tr>
+        <tr><td>Meta Audience Network（2022-06-06 前稱 Facebook Audience Network）</td><td><code>10568273599589928883</code></td></tr>
+        <tr><td>Meta Audience Network (bidding)（2022-06-06 前稱 Facebook Audience Network (bidding)）</td><td><code>11198165126854996598</code></td></tr>
+        <tr><td>Mintegral</td><td><code>1357746574408896200</code></td></tr>
+        <tr><td>Mintegral (bidding)</td><td><code>6250601289653372374</code></td></tr>
+        <tr><td>Mobfox (bidding)</td><td><code>3086513548163922365</code></td></tr>
+        <tr><td>MobileFuse (bidding)</td><td><code>7303547408604090310</code></td></tr>
+        <tr><td>Moloco Ads SDK (bidding)</td><td><code>8267622065755668722</code></td></tr>
+        <tr><td>myTarget</td><td><code>8450873672465271579</code></td></tr>
+        <tr><td>Nativo (bidding)</td><td><code>3240503836211327896</code></td></tr>
+        <tr><td>Nexxen (bidding)（2024-05-01 前稱 UnrulyX）</td><td><code>2831998725945605450</code></td></tr>
+        <tr><td>OneTag Exchange (bidding)</td><td><code>4873891452523427499</code></td></tr>
+        <tr><td>OpenX (bidding)</td><td><code>4918705482605678398</code></td></tr>
+        <tr><td>Pangle</td><td><code>4069896914521993236</code></td></tr>
+        <tr><td>Pangle KR SDK (bidding)</td><td><code>12171279046073404914</code></td></tr>
+        <tr><td>Pangle ROW SDK (bidding)</td><td><code>3525379893916449117</code></td></tr>
+        <tr><td>Pangle US SDK (bidding)</td><td><code>15999446638585856012</code></td></tr>
+        <tr><td>PubMatic (bidding)</td><td><code>3841544486172445473</code></td></tr>
+        <tr><td>PubMatic OpenWrap SDK</td><td><code>7702975372504485373</code></td></tr>
+        <tr><td>PubMatic OpenWrap SDK (bidding)</td><td><code>1234567890123456789</code></td></tr>
+        <tr><td>Reservation campaign</td><td><code>7068401028668408324</code></td></tr>
+        <tr><td>Rise (bidding)</td><td><code>6816468518946650043</code></td></tr>
+        <tr><td>Sharethrough (bidding)</td><td><code>5247944089976324188</code></td></tr>
+        <tr><td>Smaato (bidding)</td><td><code>3362360112145450544</code></td></tr>
+        <tr><td>Sonobi (bidding)</td><td><code>3270984106996027150</code></td></tr>
+        <tr><td>TripleLift (bidding)</td><td><code>8332676245392738510</code></td></tr>
+        <tr><td>Unity Ads</td><td><code>4970775877303683148</code></td></tr>
+        <tr><td>Unity Ads (bidding)</td><td><code>7069338991535737586</code></td></tr>
+        <tr><td>Verve Group (bidding)</td><td><code>5013176581647059185</code></td></tr>
+        <tr><td>Vpon</td><td><code>1940957084538325905</code></td></tr>
+        <tr><td>Yieldmo (bidding)</td><td><code>4193081836471107579</code></td></tr>
+        <tr><td>YieldOne (bidding)</td><td><code>3154533971590234104</code></td></tr>
+        <tr><td>Zucks</td><td><code>5506531810221735863</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="rewarding-the-user">Rewarding the user</h3>
+    <p>決定何時獎勵使用者時，平衡使用者體驗與獎勵驗證非常重要。Server-side callbacks 可能在到達外部系統前延遲。因此，建議使用客戶端回呼立即獎勵使用者，同時在收到 server-side callbacks 時對所有獎勵進行驗證。此方法提供良好使用者體驗，同時確保授予獎勵的有效性。</p>
+    <p>然而，對於獎勵有效性至關重要（例如獎勵影響應用程式遊戲經濟）且延遲授予獎勵可接受的應用程式，等待已驗證的 server-side callback 可能是最佳方法。</p>
+
+    <h3>Custom data</h3>
+    <p>需要在 server-side verification 回呼中加入額外資料的應用程式，可使用 rewarded ads 的自訂資料功能。設定在 rewarded ad 物件上的任何字串值都會傳遞到 SSV 回呼的 <code>custom_data</code> 查詢參數。若未設定自訂資料值，SSV 回呼中將不會出現 <code>custom_data</code> 查詢參數。</p>
+    <p>若要設定自訂獎勵字串，必須在顯示廣告前設定。</p>
+    <div class="callout"><strong>Key Point：</strong>自訂獎勵字串會被 <a href="https://en.wikipedia.org/wiki/Percent-encoding" target="_blank" rel="noopener">percent-escaped</a>，解析 SSV 回呼時可能需要解碼。</div>
+    <pre class="code" data-lang="dart"><code>RewardedAd.load(
+  adUnitId: "_adUnitId",
+  request: AdRequest(),
+  rewardedAdLoadCallback: RewardedAdLoadCallback(
+    onAdLoaded: (ad) {
+      ServerSideVerificationOptions _options =
+        ServerSideVerificationOptions(
+          customData: 'SAMPLE_CUSTOM_DATA_STRING',
+        );
+      ad.setServerSideOptions(_options);
+      _rewardedAd = ad;
+    },
+    onAdFailedToLoad: (error) {},
+  ),
+);</code></pre>
+    <p>將 <code>SAMPLE_CUSTOM_DATA_STRING</code> 替換為自訂資料。</p>
+
+    <h3 id="manual-verification">Manual verification of rewarded SSV</h3>
+    <p><code>RewardedAdsVerifier</code> 類別驗證 rewarded SSV 所執行的步驟概述如下。雖然程式碼範例為 Java 並使用 Tink 第三方函式庫，但這些步驟可使用任何支援 ECDSA 的第三方函式庫以任何語言實作。</p>
+
+    <h4>Fetch public keys</h4>
+    <p>要驗證 rewarded SSV 回呼，需要 AdMob 提供的公鑰。公鑰清單可從 <a href="https://gstatic.com/admob/reward/verifier-keys.json" target="_blank" rel="noopener">AdMob key server</a> 取得，JSON 格式類似：</p>
+    <pre class="code" data-lang="json"><code>{
+  "keys": [
+    {
+      "keyId": 1916455855,
+      "pem": "---BEGIN PUBLIC KEY---\nMF...YTPcw==\n---END PUBLIC KEY---",
+      "base64": "MFkwEwYHKoZIzj0CAQYI...ltS4nzc9yjmhgVQOlmSS6unqvN9t8sqajRTPcw=="
+    },
+    {
+      "keyId": 3901585526,
+      "pem": "---BEGIN PUBLIC KEY---\nMF...aDUsw==\n---END PUBLIC KEY---",
+      "base64": "MFYwEAYHKoZIzj0CAQYF...4akdWbWDCUrMMGIV27/3/e7UuKSEonjGvaDUsw=="
+    }
+  ]
+}</code></pre>
+    <p>公鑰會定期輪換。若快取公鑰，應在收到輪換通知 email 後更新金鑰，且快取時間不應超過 24 小時。</p>
+
+    <h4>Get content to be verified</h4>
+    <p>rewared SSV 回呼的最後兩個查詢參數固定為 <code>signature</code> 與 <code>key_id</code>（依序）。其餘查詢參數指定要驗證的內容。內容不應以任何方式修改（包括保持查詢參數的順序）。</p>
+
+    <h4>Get signature and key_id from callback URL</h4>
+    <p>從回呼 URL 解析 <code>signature</code> 與 <code>key_id</code> 查詢參數。</p>
+
+    <h4>Perform verification</h4>
+    <p>使用對應的公鑰驗證回呼 URL 的內容。若方法執行而不拋出例外，回呼 URL 即驗證成功。</p>
+
+    <h3>FAQ</h3>
+    <ul>
+      <li><strong>可以快取 AdMob key server 提供的公鑰嗎？</strong> 建議快取以減少驗證 SSV 回呼所需的作業。但公鑰會定期輪換，快取時間不應超過 24 小時。</li>
+      <li><strong>公鑰輪換頻率為何？</strong> 輪換排程不定。為確保 SSV 回呼驗證持續正常，公鑰快取不應超過 24 小時。</li>
+      <li><strong>伺服器無法連線時會發生什麼？</strong> Google 期待 <code>HTTP 200 OK</code> 成功狀態回應。若伺服器無法連線或未提供預期回應，Google 將以一秒間隔重試最多五次。</li>
+      <li><strong>如何驗證 SSV 回呼來自 Google？</strong> 使用反向 DNS 查詢驗證 SSV 回呼源自 Google。</li>
+    </ul>
+
+    <h2 id="h-19">WebView API for Ads</h2>
+    <p>WebView API for Ads 允許使用 <code>WebViewController</code> 進行應用程式內廣告變現。若應用程式透過 <code>WebViewController</code> 顯示使用 <a href="https://support.google.com/adsense/answer/9274634" target="_blank" rel="noopener">AdSense code</a> 或 <a href="https://support.google.com/admanager/answer/181073" target="_blank" rel="noopener">Google Publisher Tag</a> 實作廣告的網頁內容，應使用此 API 啟用廣告變現。詳見 <a href="https://support.google.com/admob/answer/48182#trs" target="_blank" rel="noopener">AdMob policies</a>。</p>
+
+    <h3>兩種變現路徑</h3>
+    <ol>
+      <li><strong>透過 Google Mobile Ads Flutter Plugin 請求廣告變現</strong>：可透過 Google Mobile Ads Flutter Plugin 向 AdMob 請求廣告，實作<a href="https://support.google.com/admob/answer/6128738" target="_blank" rel="noopener">行動應用程式廣告格式</a>來變現應用程式。詳見 <a href="#h-4">匯入外掛</a>。</li>
+      <li><strong>使用 WebView API for Ads</strong>：若應用程式使用 <code>WebViewController</code> 顯示來自 <a href="https://support.google.com/admanager" target="_blank" rel="noopener">Ad Manager</a> 或 <a href="https://support.google.com/adsense" target="_blank" rel="noopener">AdSense</a> 的廣告網頁內容，使用 WebView API for Ads 註冊 <code>WebViewController</code> 物件。JavaScript 在 AdSense code 或 Google Publisher Tag 中建構並發送廣告請求，無需 SDK 請求。注意僅 mobile web 與 desktop web <a href="https://support.google.com/admanager/answer/9796545" target="_blank" rel="noopener">inventory formats</a> 可透過此 API 使用。若不擁有 <code>WebViewController</code> 中的網頁內容，仍建議使用此 API 以保護廣告商免受垃圾內容影響，並提升提供內容的網頁發佈商變現。</li>
+    </ol>
+    <p>兩種方式可擇一使用，或在同一應用程式中同時使用。</p>
+
+    <h3>Before you begin</h3>
+    <ul>
+      <li>使用 <a href="https://developers.google.com/admob/flutter/quick-start.md.txt#import_the_mobile_ads_sdk" target="_blank" rel="noopener">Google Mobile Ads Flutter Plugin</a> 3.0.0 或更高版本。</li>
+      <li>在 <code>pubspec.yaml</code> 加入 <a href="https://pub.dev/packages/webview_flutter" target="_blank" rel="noopener">webview_flutter</a> 相依。</li>
+      <li>在應用程式中加入 <a href="https://pub.dev/packages/webview_flutter_android" target="_blank" rel="noopener">webview_flutter_android</a> 3.7.0 或更高版本。</li>
+    </ul>
+
+    <h3>Bypass the check for application identifier</h3>
+    <h4>Android</h4>
+    <p>在 <code>AndroidManifest.xml</code> 加入以下 <code>&lt;meta-data&gt;</code> 標籤以繞過 <code>APPLICATION_ID</code> 檢查。若略過此步驟，Google Mobile Ads Flutter Plugin 可能在應用程式啟動時拋出 <code>IllegalStateException</code>：</p>
+    <pre class="code" data-lang="xml"><code>&lt;!-- Bypass APPLICATION_ID check for WebView API for Ads --&gt;
+&lt;meta-data
+    android:name="com.google.android.gms.ads.INTEGRATION_MANAGER"
+    android:value="webview"/&gt;</code></pre>
+    <h4>iOS</h4>
+    <p>更新 <code>Runner/Info.plist</code> 加入以下鍵與字串值以繞過 <code>GADApplicationIdentifier</code> 檢查。若略過此步驟，Google Mobile Ads Flutter Plugin 可能在應用程式啟動時拋出 <code>GADInvalidInitializationException</code>：</p>
+    <pre class="code" data-lang="xml"><code>&lt;!-- Bypass GADApplicationIdentifier check for WebView API for Ads --&gt;
+&lt;key&gt;GADIntegrationManager&lt;/key&gt;
+&lt;string&gt;webview&lt;/string&gt;</code></pre>
+
+    <h3>Register the WebViewController</h3>
+    <p>為提升 <code>WebViewController</code> 中使用 AdSense code 或 Google Publisher Tags 的廣告變現，請依下列步驟：</p>
+    <ol>
+      <li>在 <code>WebViewController</code> 啟用 JavaScript。否則廣告可能無法載入。</li>
+      <li>為提升使用者廣告體驗並與 Chrome 的 cookie 政策一致，在 <code>AndroidWebViewController</code> 實例啟用第三方 cookies。</li>
+      <li>呼叫 Google Mobile Ads Flutter Plugin 提供的 <code>registerWebView()</code> 方法註冊 <code>WebViewController</code> 實例。</li>
+    </ol>
+    <pre class="code" data-lang="dart"><code>import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+
+@override
+class WebViewExampleState extends State&lt;WebViewExample&gt; {
+  late final WebViewController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    createWebView();
+  }
+
+  void createWebView() async {
+    controller = WebViewController();
+    // 1. Enable JavaScript in the web view.
+    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    // 2. Enable third-party cookies for Android.
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewCookieManager cookieManager = AndroidWebViewCookieManager(
+        const PlatformWebViewCookieManagerCreationParams());
+      await cookieManager.setAcceptThirdPartyCookies(
+        controller.platform as AndroidWebViewController, true);
+    }
+    // 3. Register the web view.
+    await MobileAds.instance.registerWebView(controller);
+  }
+}</code></pre>
+
+    <h3>Load the URL</h3>
+    <p>現在可透過 <code>WebViewController</code> 載入 URL 並顯示網頁內容。建議先載入測試 URL <code>https://google.github.io/webview-ads/test/</code> 以測試整合，再使用自己的 URL。若 JavaScript 未啟用，網頁將顯示錯誤。</p>
+    <pre class="code" data-lang="dart"><code>import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+
+@override
+class WebViewExampleState extends State&lt;WebViewExample&gt; {
+  late final WebViewController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    createWebView();
+  }
+
+  void createWebView() async {
+    controller = WebViewController();
+    // 1. Enable JavaScript in the web view.
+    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    // 2. Enable third-party cookies for Android.
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewCookieManager cookieManager = AndroidWebViewCookieManager(
+        const PlatformWebViewCookieManagerCreationParams());
+      await cookieManager.setAcceptThirdPartyCookies(
+        controller.platform as AndroidWebViewController, true);
+    }
+
+    // 3. Register the web view.
+    await MobileAds.instance.registerWebView(controller);
+
+    // 4. Load the URL.
+    await controller.loadRequest(Uri.parse('https://google.github.io/webview-ads/test/'));
+  }
+}</code></pre>
+    <p>測試 URL 在以下條件成立時顯示綠色狀態條，表示整合成功：</p>
+    <ul>
+      <li><code>WebView</code> 已連線至 Google Mobile Ads Flutter Plugin</li>
+      <li>JavaScript 已啟用</li>
+      <li>第三方 cookies 可用（iOS 裝置上不預期）</li>
+      <li>第一方 cookies 可用</li>
+    </ul>
+    <p>可使用 proxy 工具（如 <a href="https://www.charlesproxy.com/" target="_blank" rel="noopener">Charles</a>）擷取應用程式的 HTTPS 流量，並檢查廣告請求中的 <code>&amp;scar=</code> 參數。完整測試 URL 原始碼請見 <a href="https://github.com/google/webview-ads/blob/main/test/index.html" target="_blank" rel="noopener">source code</a>。</p>
+
+    <h2 id="h-20">Android GMA Next-Gen SDK</h2>
+    <p>為採用 Android 延遲與穩定性改進，使用 GMA Next-Gen SDK。本指南說明如何設定 Google Mobile Ads Flutter Plugin 以在 Android 上使用 GMA Next-Gen SDK。</p>
+
+    <h3>前置需求</h3>
+    <ul>
+      <li>安裝 Google Mobile Ads Flutter Plugin 9.0.0 或更高版本。</li>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads Flutter Plugin</a>。</li>
+      <li>擁有 Flutter 專案。</li>
+    </ul>
+
+    <h3>設定 Android Gradle</h3>
+    <p>要在 Android 上使用 GMA Next-Gen SDK，必須更新 Gradle 設定：</p>
+    <ul>
+      <li><a href="https://developers.google.com/admob/android/next-gen/migration.md.txt#set_the_minimum_and_compile_android_api_levels" target="_blank" rel="noopener">Set the minimum and compile Android API levels</a>。</li>
+      <li>若使用 mediation，請依照迁移步驟<a href="https://developers.google.com/admob/android/next-gen/migration.md.txt#exclude_comgoogleandroidgms_modules_in_mediation_integrations" target="_blank" rel="noopener">exclude <code>com.google.android.gms</code> modules</a> 以避免重複類別錯誤。</li>
+    </ul>
+
+    <h3>以環境宣告執行</h3>
+    <p>要在建置與執行 Android 應用程式時使用 GMA Next-Gen SDK，必須提供 <code>USE_NEXT_GEN_SDK</code> 環境宣告設為 <code>true</code>。每次建置或執行應用程式時，執行：</p>
+    <pre class="code" data-lang="bash"><code>flutter run --dart-define USE_NEXT_GEN_SDK=true</code></pre>
+
+    <h3>以 IDE 設定執行</h3>
+    <p>若使用整合開發環境（IDE）執行應用程式，可在啟動設定中設定環境宣告，而非透過命令列傳遞旗標。例如可在 JSON 檔案中定義這些變數並加入 IDE 設定。詳見 <a href="https://dart.dev/libraries/core/environment-declarations#specifying-environment-declarations" target="_blank" rel="noopener">specifying environment declarations</a>。</p>
+
+    <h3>更新 Native ads templates</h3>
+    <p>若使用 native ads templates，需進行以下更新以支援 GMA Next-Gen SDK：</p>
+    <h4>更新 <code>NativeAdFactory</code> 套件匯入</h4>
+    <p>Android 上更新 <code>NativeAdFactory</code> 類別的 import 陳述式：</p>
+    <pre class="code" data-lang="java"><code>// 替換此 import：
+import io.flutter.plugins.googlemobileads.GoogleMobileAdsPlugin.NativeAdFactory;
+
+// 為此 import：
+import io.flutter.plugins.googlemobileads.NativeAdFactory;</code></pre>
+    <pre class="code" data-lang="kotlin"><code>// 替換此 import：
+import io.flutter.plugins.googlemobileads.GoogleMobileAdsPlugin.NativeAdFactory
+
+// 為此 import：
+import io.flutter.plugins.googlemobileads.NativeAdFactory</code></pre>
+    <h4>更新 native ad view layout XML views</h4>
+    <p>在 native ads 的 layout XML 檔案中，更新 native ad view 類別：</p>
+    <pre class="code" data-lang="xml"><code>&lt;!-- 替換此元素： --&gt;
+&lt;com.google.android.gms.ads.nativead.NativeAdView ... /&gt;
+
+&lt;!-- 為此元素： --&gt;
+&lt;com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView ... /&gt;</code></pre>
+
+    <h3>設定兩種環境的相依</h3>
+    <p>若專案需同時支援 Google Mobile Ads SDK（Legacy）與 GMA Next-Gen SDK，可在 <code>android/app/build.gradle</code> 中根據環境宣告條件式定義相依。Google Mobile Ads Flutter Plugin 在 <a href="https://github.com/googleads/googleads-mobile-flutter/blob/c6718235bcc04631c40ce198edabde8f537a10c2/packages/google_mobile_ads/example/android/app/build.gradle#L36-L50" target="_blank" rel="noopener">example app build.gradle</a> 提供範例設定。</p>
+
+    <h2 id="h-21">測試廣告</h2>
+    <p>本指南說明如何在廣告整合中啟用測試廣告。開發期間啟用測試廣告非常重要，以便點擊廣告而不向 Google 廣告商收費。若在非測試模式下點擊過多廣告，帳號可能被標記為無效活動。</p>
+    <p>取得測試廣告有兩種方式：</p>
+    <ol>
+      <li>使用 Google 的 sample ad units。</li>
+      <li>使用自己的廣告單元並啟用測試裝置。</li>
+    </ol>
+
+    <h3>前置需求</h3>
+    <ul>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt" target="_blank" rel="noopener">Set up Google Mobile Ads Flutter Plugin</a>。</li>
+      <li><a href="https://developers.google.com/admob/flutter/quick-start.md.txt#import_the_mobile_ads_sdk" target="_blank" rel="noopener">Import Google Mobile Ads Flutter Plugin</a> 至 Flutter 應用程式。</li>
+    </ul>
+
+    <h3>Sample ad units</h3>
+    <p>啟用測試最快的方式是使用 Google 提供的測試廣告單元。這些廣告單元不與 AdMob 帳號關聯，因此使用時帳號不會產生無效流量。</p>
+    <p>Google 為 <a href="https://developers.google.com/admob/android/test-ads.md.txt#demo_ad_units" target="_blank" rel="noopener">Android</a> 與 <a href="https://developers.google.com/admob/ios/test-ads.md.txt#demo_ad_units" target="_blank" rel="noopener">iOS</a> 提供不同的測試廣告單元。在 iOS 上進行測試請求需使用 iOS 測試廣告單元，在 Android 上需使用 Android 測試廣告單元。</p>
+    <p>這些廣告單元指向特定的測試 creatives。</p>
+    <div class="callout"><strong>Key Point：</strong>發布應用程式前務必將這些測試 ID 替換為自己的廣告單元 ID。</div>
+
+    <h3>啟用測試裝置</h3>
+    <p>若想以更接近正式的廣告進行更嚴謹的測試，可將裝置設定為測試裝置並使用在 AdMob UI 建立的廣告單元 ID。</p>
+    <div class="callout"><strong>Key Point：</strong>Android emulators 與 iOS simulators 會自動設定為測試裝置。</div>
+
+    <h4>在 AdMob UI 加入測試裝置</h4>
+    <p>使用 AdMob UI 以簡單、非程式化的方式加入測試裝置並測試新的或現有的應用程式建置。詳見 <a href="https://support.google.com/admob/answer/9691433" target="_blank" rel="noopener">Learn how</a>。</p>
+    <div class="callout"><strong>Key Point：</strong>新測試裝置通常在 15 分鐘內開始在應用程式中投放測試廣告，但最多可能需要 24 小時。</div>
+
+    <h4>使用應用程式層級測試模式</h4>
+    <p>指定要測試的應用程式與版本並接收測試廣告，使用應用程式層級測試模式。詳見 <a href="https://support.google.com/admob/answer/17080939" target="_blank" rel="noopener">Set up a test app</a>。</p>
+
+    <h4>程式化加入測試裝置</h4>
+    <p>開發期間若想在應用程式中測試廣告，依下列步驟程式化註冊測試裝置：</p>
+    <ol>
+      <li>執行以 Google Mobile Ads Flutter Plugin 設定的應用程式，並使用上述測試廣告單元 ID 之一發出廣告請求。
+        <pre class="code" data-lang="dart"><code>void loadBanner() {
+  final adUnitId = Platform.isAndroid
+    ? 'ca-app-pub-3940256099942544/6300978111'
+    : 'ca-app-pub-3940256099942544/2934735716';
+  final bannerAd = BannerAd(
+    adUnitId: adUnitId,
+    request: AdRequest(),
+    size: AdSize.banner,
+  );
+  bannerAd.load();
+}</code></pre>
+      </li>
+      <li>檢查 console 或 logcat 輸出中是否有類似訊息：
+        <pre class="code" data-lang="text"><code>Android:
+I/Ads: Use
+  RequestConfiguration.Builder
+    .setTestDeviceIds(Arrays.asList("33BE2250B43518CCDA7DE426D04EE231"))
+  to get test ads on this device.
+
+iOS:
+&lt;Google&gt; To get test ads on this device, set:
+  GADMobileAds.sharedInstance.requestConfiguration.testDeviceIdentifiers =
+  @[ @"2077ef9a63d2b398840261c8221a0c9b" ];</code></pre>
+      </li>
+      <li>將字母數字測試裝置 ID 複製到剪貼簿。</li>
+      <li>修改程式碼，在發出廣告請求前呼叫 <code>MobileAds.instance.updateRequestConfiguration</code> 傳入測試裝置 ID 清單。
+        <pre class="code" data-lang="dart"><code>MobileAds.instance.updateRequestConfiguration(
+  RequestConfiguration(testDeviceIds: ['33BE2250B43518CCDA7DE426D04EE231']));</code></pre>
+        發布應用程式前務必移除設定這些測試裝置的程式碼。
+      </li>
+      <li>重新執行應用程式。若正確將裝置加入為測試裝置，banner、interstitial 與 rewarded 廣告頂部中央會顯示 <strong>Test Ad</strong> 標籤。
+        <p>帶有此 <strong>Test Ad</strong> 標籤的廣告可安全點擊。測試廣告的請求、曝光與點擊不會出現在帳號報表中。Mediated ads <strong>不會</strong>顯示 <strong>Test Ad</strong> 標籤。</p>
+      </li>
+    </ol>
+    <p>裝置註冊為測試裝置後，可將測試 <code>adUnitID</code> 替換為自己的 <code>adUnitID</code> 以接收更真實的測試廣告。</p>
+
+    <h3>Mediation 測試</h3>
+    <p>Google 的 sample ad units 只顯示 Google Ads。要測試 mediation 設定，必須<a href="https://developers.google.com/admob/flutter/test-ads.md.txt#enable_test_devices" target="_blank" rel="noopener">啟用測試裝置</a>。</p>
+    <p>Mediated ads <strong>不會</strong>顯示 <strong>Test Ad</strong> 標籤。您有責任確保每個 mediation 網路的測試廣告已啟用，以免這些網路將帳號標記為無效活動。詳見<a href="https://developers.google.com/admob/flutter/choose-networks.md.txt#network_details" target="_blank" rel="noopener">各網路的 mediation 指南</a>。</p>
+    <p>若不確定某個 mediation 廣告網路 adapter 是否支援測試廣告，開發期間最安全的做法是避免點擊該網路的廣告。可檢查任何廣告格式的 <code>Ad.responseInfo</code> 以判斷目前廣告由哪個廣告網路提供。</p>
+
+    <h2 id="h-22">補充資訊</h2>
+    <ul>
+      <li><strong>套件</strong>：<code>google_mobile_ads</code>（pub.dev，verified publisher: google.dev）</li>
+      <li><strong>版本</strong>：<code>9.2.0</code>（發布於 2026-10-21）</li>
+      <li><strong>SDK</strong>：Flutter</li>
+      <li><strong>平台</strong>：Android、iOS</li>
+      <li><strong>授權</strong>：Apache-2.0</li>
+      <li><strong>相依套件</strong>：<code>flutter</code>、<code>meta ^1.17.0</code>、<code>webview_flutter ^4.14.1</code>、<code>webview_flutter_android ^4.12.0</code>、<code>webview_flutter_wkwebview ^3.25.1</code></li>
+      <li><strong>GitHub</strong>：<a href="https://github.com/googleads/googleads-mobile-flutter/tree/main/packages/google_mobile_ads" target="_blank" rel="noopener">googleads/googleads-mobile-flutter</a></li>
+      <li><strong>API 參考</strong>：<a href="https://pub.dev/documentation/google_mobile_ads/latest/" target="_blank" rel="noopener">pub.dev documentation</a></li>
+    </ul>
+
+    <h2 id="h-23">參考來源</h2>
+    <ul>
+      <li>Google AdMob 官方快速入門（Flutter）：<a href="https://developers.google.com/admob/flutter/quick-start?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/quick-start</a></li>
+      <li>Banner 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/banner?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/banner</a></li>
+      <li>Interstitial 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/interstitial?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/interstitial</a></li>
+      <li>Native 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/native?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/native</a></li>
+      <li>Rewarded 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/rewarded?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/rewarded</a></li>
+      <li>Rewarded interstitial 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/rewarded-interstitial?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/rewarded-interstitial</a></li>
+      <li>App open 廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/app-open?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/app-open</a></li>
+      <li>Mediation（Flutter）：<a href="https://developers.google.com/admob/flutter/mediation?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/mediation</a></li>
+      <li>Ad Inspector（Flutter）：<a href="https://developers.google.com/admob/flutter/ad-inspector?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/ad-inspector</a></li>
+      <li>廣告載入錯誤（Flutter）：<a href="https://developers.google.com/admob/flutter/ad-load-errors?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/ad-load-errors</a></li>
+      <li>回應資訊（Flutter）：<a href="https://developers.google.com/admob/flutter/response-info?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/response-info</a></li>
+      <li>伺服器端驗證 SSV（Flutter）：<a href="https://developers.google.com/admob/flutter/ssv?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/ssv</a></li>
+      <li>WebView API for Ads（Flutter）：<a href="https://developers.google.com/admob/flutter/webview?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/webview</a></li>
+      <li>Android GMA Next-Gen SDK（Flutter）：<a href="https://developers.google.com/admob/flutter/android-next?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/android-next</a></li>
+      <li>測試廣告（Flutter）：<a href="https://developers.google.com/admob/flutter/test-ads?hl=zh-tw" target="_blank" rel="noopener">developers.google.com/admob/flutter/test-ads</a></li>
+      <li>pub.dev 套件頁：<a href="https://pub.dev/packages/google_mobile_ads" target="_blank" rel="noopener">pub.dev/packages/google_mobile_ads</a></li>
+      <li>安裝頁：<a href="https://pub.dev/packages/google_mobile_ads/install" target="_blank" rel="noopener">pub.dev/packages/google_mobile_ads/install</a></li>
+    </ul>
+    <p style="color: var(--ink-dim); font-size: .85rem;">本文件依 Google 官方文件整理產生，僅供參考；實際使用請以官方最新文件為準。</p>
+  </main>
+</div>
+
+<footer>
+  <p>JackCompass · docs/admob-flutter-quickstart.html</p>
+  <p>來源：Google Developers — AdMob for Flutter quick start</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+需求
+1.根據docs/admob-flutter-quickstart.html的規格來替換原先admob的元件。
+2.使用虛擬機測試需使用該device id加到測試裝置清單，測試時採用官方指定的Banner 專用的測試廣告單元 ID
+3.必要的測試資訊需更新agents.md
