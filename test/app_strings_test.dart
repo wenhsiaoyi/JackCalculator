@@ -19,6 +19,9 @@ final Map<String, String Function(AppStrings)> _fields = {
   'indicatorSeparator': (s) => s.indicatorSeparator,
   'languageLabel': (s) => s.languageLabel,
   'languageSystem': (s) => s.languageSystem,
+  'supportUs': (s) => s.supportUs,
+  'thanksForSupport': (s) => s.thanksForSupport,
+  'adLoadFailed': (s) => s.adLoadFailed,
 };
 
 void main() {
@@ -75,5 +78,7 @@ void main() {
     expect(AppStrings.simplified.taxRateError, contains('请输入'));
     expect(AppStrings.simplified.decimalPlaces, '小数位数');
     expect(AppStrings.simplified.languageSystem, '跟随系统');
+    expect(AppStrings.simplified.supportUs, '支持我们');
+    expect(AppStrings.simplified.adLoadFailed, contains('广告加载失败'));
   });
 }

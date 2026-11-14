@@ -23,6 +23,9 @@ class AppStrings {
     required this.indicatorSeparator,
     required this.languageLabel,
     required this.languageSystem,
+    required this.supportUs,
+    required this.thanksForSupport,
+    required this.adLoadFailed,
   });
 
   /// `MaterialApp.title`；原生啟動器名稱不受它影響（spec OUT 項）。
@@ -49,6 +52,10 @@ class AppStrings {
   /// 唯一會被翻譯的語言選項；其餘三個是自稱，見下方常數。
   final String languageSystem;
 
+  final String supportUs;
+  final String thanksForSupport;
+  final String adLoadFailed;
+
   static const String languageEnglish = 'English';
   static const String languageTraditional = '繁體中文';
 
@@ -69,6 +76,9 @@ class AppStrings {
     indicatorSeparator: '   |   ',
     languageLabel: 'Language',
     languageSystem: 'System',
+    supportUs: 'Support us',
+    thanksForSupport: 'Thanks for your support!',
+    adLoadFailed: 'Ad failed to load. Please try again later.',
   );
 
   static const AppStrings simplified = AppStrings(
@@ -85,6 +95,9 @@ class AppStrings {
     indicatorSeparator: '  ｜  ',
     languageLabel: '语言',
     languageSystem: '跟随系统',
+    supportUs: '支持我们',
+    thanksForSupport: '感谢您的赞助！',
+    adLoadFailed: '广告加载失败，请稍后再试',
   );
 
   static const AppStrings traditional = AppStrings(
@@ -101,6 +114,9 @@ class AppStrings {
     indicatorSeparator: '  ｜  ',
     languageLabel: '語言',
     languageSystem: '跟隨系統',
+    supportUs: '支持我們',
+    thanksForSupport: '感謝您的贊助！',
+    adLoadFailed: '廣告載入失敗，請稍後再試',
   );
 
   /// 沒有對照表的 locale 一律退回 English，所以呼叫端不必先檢查支援與否。
