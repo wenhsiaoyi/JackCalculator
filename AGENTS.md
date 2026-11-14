@@ -14,7 +14,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 - **開發工具快取全部在 E:，不要寫回 C:** `GRADLE_USER_HOME=E:\gradle-home`、`PUB_CACHE=E:\pub-cache`（使用者層級環境變數）。Gradle wrapper 指定的 **Gradle 9.3.1 已手動安裝**在 `E:\gradle-home\wrapper\dists\`，見下方「Gradle distribution 下載」
 - **`C:\tools\Android` 那套 30.30 GB 的舊 Android SDK 已於 2026-10-13 刪除**，見下方「環境變更」
 - 無 codegen（未引入 build_runner）、第三方 plugin：`shared_preferences`、`google_mobile_ads`（**僅 Android／iOS 生效**，2026-11-14 AdMob 一輪引入，見依賴政策例外）；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`、`google_mobile_ads`、`flutter_localizations`（**SDK 套件，`sdk: flutter`，不是 plugin、不進 pub.dev**；2026-10-20 多國語系一輪引入）（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族、`webview_flutter` 家族）。**`intl 0.20.3` 在 `pubspec.lock` 仍是 `dependency: transitive`、`pubspec.yaml` 未宣告、也不用於千分位** —— `flutter_localizations` 能在不宣告 `intl` 的前提下解析成功（實測：`pub get`／`analyze`／`test`／雙平台 build 全過，`pubspec.yaml` 與 `pubspec.lock` 在本輪零變動）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
-- **測試基線：189 條全綠**（2026-11-14 AdMob 一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
+- **測試基線：190 條全綠**（2026-11-16 AdMob 調整一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
 - **沒有 CI**（無 `.github/`、無 pre-commit hook）。驗證只能靠本機指令
 
 ## 指令
@@ -22,7 +22,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 ```powershell
 flutter pub get
 flutter analyze          # lint；設定於 analysis_options.yaml（flutter_lints 6.0）
-flutter test             # 全部測試（目前 189 個）
+flutter test             # 全部測試（目前 190 個）
 flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
@@ -215,6 +215,12 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **上架前待辦**：換正式 App ID／廣告單元 ID、清空 `testDeviceIds`、GDPR／UMP 同意、iOS `SKAdNetworkItems`。
 - 截圖證據：`docs/admob/banner.png`／`settings.png`／`interstitial.png`／`thanks.png`（2026-11-14，jack_android36、繁中）。
 - APK 體積：release 52,320,052 bytes（49.90 MiB），對 47.89 MiB 基線增量 **+2.01 MiB**（2,107,910 bytes；GMA SDK＋webview transitive）。
+
+### 調整一輪（2026-11-16，branch `feat/admob-polish`）
+
+- **Banner 顯示 15 秒後自動消失**：`BannerAdView.visibleDuration`（常數有測試鎖定），計時從 `onAdLoaded` 實際顯示起算；時間到先離樹再 dispose，本次啟動不再出現、冷啟動重新顯示 15 秒；進設定頁再回來不重置。隱藏後鍵盤區 `Expanded` 收回空間。
+- **設定頁「支持我們」改滿版實心膠囊**：`FilledButton.icon`（56dp 高、`StadiumBorder`、字級 16 w600、主題主色實心）；載入中 `onPressed: null` 且圖示換 spinner，spinner 色對齊 M3 disabled 前景（`onSurface` alpha 0.38）。key／字串／插屏流程不變。
+- **計時驗證法**：debug APK 冷啟動後 +8s 截圖應見 Banner、+26s 應消失；兩處變更都在 `AdService.supported` 的 mobile 闸門內，widget test（Windows host）觸發不到，沿用「模擬器實測為證」裁定。證據：`docs/admob/polish-banner-present.png`／`polish-banner-gone.png`／`polish-support-capsule.png`／`polish-thanks.png`（jack_android36、繁中）。
 
 ## 中文用語規範（台灣正體）
 
