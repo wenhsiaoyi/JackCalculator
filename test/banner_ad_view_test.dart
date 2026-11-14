@@ -12,6 +12,10 @@ import 'package:jack_calculator/views/components/banner_ad_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('Banner 顯示時長鎖定 15 秒（需求：顯示 15 秒後消失）', () {
+    expect(BannerAdView.visibleDuration, const Duration(seconds: 15));
+  });
+
   testWidgets('桌面 host 上 BannerAdView 是 zero-size shrink、無 AdWidget',
       (tester) async {
     await tester.pumpWidget(

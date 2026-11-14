@@ -7,8 +7,12 @@ import '../../core/ad_service.dart';
 
 /// 主畫面底部錨定自適應 Banner（spec D4／D5）。
 /// 載入前、失敗、桌面一律 zero-size，不佔版面。
+/// 顯示滿 [visibleDuration] 後自動消失，本次啟動不再出現。
 class BannerAdView extends StatefulWidget {
   const BannerAdView({super.key});
+
+  /// 需求：Banner 顯示 15 秒後消失；計時從實際顯示（onAdLoaded）起算。
+  static const Duration visibleDuration = Duration(seconds: 15);
 
   @override
   State<BannerAdView> createState() => _BannerAdViewState();
@@ -16,6 +20,7 @@ class BannerAdView extends StatefulWidget {
 
 class _BannerAdViewState extends State<BannerAdView> {
   BannerAd? _bannerAd;
+  Timer? _hideTimer;
 
   @override
   void initState() {
@@ -37,7 +42,10 @@ class _BannerAdViewState extends State<BannerAdView> {
       size: size,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          if (mounted) setState(() => _bannerAd = ad as BannerAd);
+          if (!mounted) return;
+          setState(() => _bannerAd = ad as BannerAd);
+          _hideTimer?.cancel();
+          _hideTimer = Timer(BannerAdView.visibleDuration, _hideAd);
         },
         onAdFailedToLoad: (ad, error) {
           // 自動重新整理失敗時 ad 可能正是顯示中的那顆，不能 dispose。
@@ -49,8 +57,17 @@ class _BannerAdViewState extends State<BannerAdView> {
     unawaited(ad.load());
   }
 
+  void _hideAd() {
+    _hideTimer = null;
+    final ad = _bannerAd;
+    // 先離樹再 dispose，避免 AdWidget 還在樹上時廣告已被釋放。
+    setState(() => _bannerAd = null);
+    ad?.dispose();
+  }
+
   @override
   void dispose() {
+    _hideTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
   }

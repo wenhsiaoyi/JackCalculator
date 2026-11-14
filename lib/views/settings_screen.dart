@@ -180,19 +180,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               if (AdService.supported) ...[
                 const SizedBox(height: 24),
-                ListTile(
-                  key: const Key('supportUsButton'),
-                  leading: const Icon(Icons.volunteer_activism),
-                  title: Text(strings.supportUs),
-                  enabled: !_loadingAd,
-                  trailing: _loadingAd
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                  onTap: () => _onSupportTap(strings),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('supportUsButton'),
+                    onPressed:
+                        _loadingAd ? null : () => _onSupportTap(strings),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    icon: _loadingAd
+                        ? SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              // 對齊 M3 disabled 前景色，載入中仍與 label 同色。
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.38),
+                            ),
+                          )
+                        : const Icon(Icons.volunteer_activism),
+                    label: Text(strings.supportUs),
+                  ),
                 ),
               ],
             ],
