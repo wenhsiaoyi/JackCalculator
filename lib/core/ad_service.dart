@@ -10,10 +10,13 @@ class AdService {
 
   static bool get supported => Platform.isAndroid || Platform.isIOS;
 
-  /// 模擬器測試裝置 ID（spec D3）：Task 6 從 logcat 取得後填入。
+  /// jack_android36 測試裝置 ID（spec D3）：ANDROID_ID 的 MD5 大寫
+  /// （logcat 未印 setTestDeviceIds 訊息，走備援路徑取得）。
   /// 模擬器本就會自動成為測試裝置，此清單是需求 2 的明確註冊。
   /// 上架前必須清空並移除相關呼叫。
-  static const List<String> testDeviceIds = <String>[];
+  static const List<String> testDeviceIds = <String>[
+    'E65AFE3B8939AFE09E942D96966EFC21',
+  ];
 
   static Future<void> initialize() async {
     if (!supported) return;
