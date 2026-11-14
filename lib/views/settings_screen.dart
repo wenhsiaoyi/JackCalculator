@@ -1,9 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../bloc/language_cubit.dart';
 import '../bloc/settings_cubit.dart';
+import '../core/ad_service.dart';
 import '../core/app_locale.dart';
 import '../core/app_strings.dart';
 import '../engine/calc_settings.dart';
@@ -30,6 +32,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _taxController;
   bool _taxInvalid = false;
+  bool _loadingAd = false;
 
   @override
   void initState() {
@@ -52,6 +55,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (parsed == null) return;
     cubit.setTaxRate(parsed);
   }
+
+  Future<void> _onSupportTap(AppStrings strings) async {
+    setState(() => _loadingAd = true);
+    final ad = await AdService.loadInterstitial();
+    if (!mounted) return;
+    setState(() => _loadingAd = false);
+    if (ad == null) {
+      _showSnack(strings.adLoadFailed);
+      return;
+    }
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        if (mounted) _showSnack(strings.thanksForSupport);
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        if (mounted) _showSnack(strings.adLoadFailed);
+      },
+    );
+    await ad.show();
+  }
+
+  void _showSnack(String message) =>
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +178,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
+              if (AdService.supported) ...[
+                const SizedBox(height: 24),
+                ListTile(
+                  key: const Key('supportUsButton'),
+                  leading: const Icon(Icons.volunteer_activism),
+                  title: Text(strings.supportUs),
+                  enabled: !_loadingAd,
+                  trailing: _loadingAd
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : null,
+                  onTap: () => _onSupportTap(strings),
+                ),
+              ],
             ],
           );
         },

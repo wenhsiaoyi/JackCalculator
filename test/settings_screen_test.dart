@@ -136,4 +136,13 @@ void main() {
     await tester.pump();
     expect(find.text('Enter 0–100 with at most 1 decimal'), findsOneWidget);
   });
+
+  testWidgets('桌面 host 上不支持按鈕整個隱藏（spec D7）', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final cubit = SettingsCubit(const SettingsRepository());
+    addTearDown(cubit.close);
+    await tester.pumpWidget(_settingsApp(cubit, const Locale('en')));
+    expect(find.byKey(const Key('supportUsButton')), findsNothing);
+    expect(find.text('Support us'), findsNothing);
+  });
 }
