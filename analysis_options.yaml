@@ -10,6 +10,10 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  errors:
+    # Flutter 3.50 把 material.dart 標 deprecated（改 material_ui 套件）；
+    # 遷移另開一輪，本輪先忽略以免 13 條 info 淹沒基線（2026-11-14 裁定）。
+    deprecated_member_use: ignore
   exclude:
     - build/**
     - android/**
