@@ -57,3 +57,7 @@ graft/
 
 # subagent-driven-development scratch (ledger, briefs, review packages).
 .superpowers/
+
+# 簽章材料僅存本機（與 Play SA JSON 同級），永不 commit
+*.jks
+keystore.properties

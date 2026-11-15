@@ -3,7 +3,7 @@
     量一個 Android process 在一段時間內吃掉多少 CPU（以「單一核心的百分比」表示）。
 
 .EXAMPLE
-    ./scripts/measure_cpu.ps1 -Package wenhsiaoyi.jack_calculator -Seconds 30
+    ./scripts/measure_cpu.ps1 -Package com.wenhsiaoyi.jackcalculator -Seconds 30
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Package,

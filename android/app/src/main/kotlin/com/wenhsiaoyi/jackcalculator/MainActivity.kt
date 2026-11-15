@@ -1,4 +1,4 @@
-package wenhsiaoyi.jack_calculator
+package com.wenhsiaoyi.jackcalculator
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803093500271",
+    "project_id": "jackcalculator-site",
+    "storage_bucket": "jackcalculator-site.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803093500271:android:ad0f14a00f45b2ec6d589a",
+        "android_client_info": {
+          "package_name": "com.wenhsiaoyi.jackcalculator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqpeTediTxv677f0DhmY75j-XVlT1yGaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
