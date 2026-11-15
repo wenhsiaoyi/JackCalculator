@@ -76,8 +76,7 @@ class AppStrings {
     indicatorSeparator: '   |   ',
     languageLabel: 'Language',
     languageSystem: 'System',
-    supportUs: 'Support us',
-    thanksForSupport: 'Thanks for your support!',
+    supportUs: 'Watch ad to support us',    thanksForSupport: 'Thanks for your support!',
     adLoadFailed: 'Ad failed to load. Please try again later.',
   );
 
@@ -95,8 +94,7 @@ class AppStrings {
     indicatorSeparator: '  ｜  ',
     languageLabel: '语言',
     languageSystem: '跟随系统',
-    supportUs: '支持我们',
-    thanksForSupport: '感谢您的赞助！',
+    supportUs: '看广告支持我们',    thanksForSupport: '感谢您的赞助！',
     adLoadFailed: '广告加载失败，请稍后再试',
   );
 
@@ -114,8 +112,7 @@ class AppStrings {
     indicatorSeparator: '  ｜  ',
     languageLabel: '語言',
     languageSystem: '跟隨系統',
-    supportUs: '支持我們',
-    thanksForSupport: '感謝您的贊助！',
+    supportUs: '看廣告支持我們',    thanksForSupport: '感謝您的贊助！',
     adLoadFailed: '廣告載入失敗，請稍後再試',
   );
 

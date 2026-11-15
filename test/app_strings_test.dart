@@ -78,7 +78,6 @@ void main() {
     expect(AppStrings.simplified.taxRateError, contains('请输入'));
     expect(AppStrings.simplified.decimalPlaces, '小数位数');
     expect(AppStrings.simplified.languageSystem, '跟随系统');
-    expect(AppStrings.simplified.supportUs, '支持我们');
-    expect(AppStrings.simplified.adLoadFailed, contains('广告加载失败'));
+    expect(AppStrings.simplified.supportUs, '看广告支持我们');    expect(AppStrings.simplified.adLoadFailed, contains('广告加载失败'));
   });
 }

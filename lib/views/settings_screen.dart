@@ -4,7 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
+import 'package:package_info_plus/package_info_plus.dart';
 import '../bloc/language_cubit.dart';
 import '../bloc/settings_cubit.dart';
 import '../core/ad_service.dart';
@@ -221,6 +221,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ],
+              const SizedBox(height: 32),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final version = snapshot.data == null
+                      ? ''
+                      : '${snapshot.data!.version}+${snapshot.data!.buildNumber}';
+                  return Center(
+                    child: Text(
+                      version.isEmpty ? '' : 'v$version',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
             ],
           );
         },
