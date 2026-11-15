@@ -27,7 +27,7 @@ flutter test test/widget_test.dart
 flutter test --plain-name "immediate execution: 2 + 3 x 4 = 20"   # 單一測試
 flutter run -d windows   # 目前唯一能直接在本機跑起來的目標
 flutter build windows    # 可用
-flutter build apk        # 可用；預設產 release APK（本專案加了第一個 plugin 後首建實測 174.5s，產出 app-release.apk 46.9MB；仍用 debug key 簽章，見既有簽章一節）
+flutter build apk        # 可用；預設產 release APK（本專案加了第一個 plugin 後首建實測 174.5s，產出 app-release.apk 46.9MB；2026-11-15 起用 upload key 簽章，見簽章一節）
 ```
 
 **改完 code 的標準檢查順序：`flutter analyze` → `flutter test`。** 兩者目前都是乾淨通過。
@@ -109,8 +109,11 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 
 **多國語系一輪之後（2026-10-20）**：只有 Dart 側 `MaterialApp.title`（`lib/main.dart`，值取自 `AppStrings.appTitle`）會隨語系變動（繁中「Jack計算機」／簡中「Jack计算器」／英文 "Jack Calculator"）；**原生啟動器與視窗標題恆為「Jack計算機」** —— Android `android:label`、iOS `CFBundleDisplayName`、Windows 視窗標題、Linux GTK 標題四者都不變（OUT 定案：原生名稱不在地化）。
 
-### Android release 簽章還是 debug key
-`android/app/build.gradle.kts` 的 release `signingConfig` 指向 debug（模板 TODO 未處理）。不能直接產出可發佈的 APK。
+### Android release 簽章：upload key（2026-11-15 建立）
+`android/app/build.gradle.kts` 從本機 `android/keystore.properties` 條件式建立 `upload` signingConfig（JackCompass 同款模式）：缺檔時整個簽章設定不套，release 仍會建置、只是產出未簽章的 AAB。Keystore 為 `android/app/upload-keystore.jks`（alias `upload`、RSA 2048），兩檔都被 `.gitignore`（`*.jks`、`keystore.properties`）蓋住，**永不 commit**。AAB 實測含 `META-INF/UPLOAD.SF/RSA`、憑證 SHA-256 `56:F6:ED:5F:5A:7B:1A:03:72:8D:85:FB:5E:67:EA:7E:5E:BF:53:26:45:12:6C:C2:DE:12:B9:8F:AD:7C:3D:BC` 與 keystore 一致。上傳 Play 後由 Play App Signing 用 app signing key 重簽，upload key 只負責上傳驗證。
+
+### Flutter 3.50 release 預設開 R8，會當掉 GMA／WorkManager
+Flutter 3.50 的 `FlutterPlugin.kt:211` 對 release 設 `isMinifyEnabled = true`。R8 刪掉 Room 產生類的無參建構子（`androidx.work.impl.WorkDatabase_Impl` 的 `public void <init>()` 出現在 `build/app/outputs/mapping/release/usage.txt`），WorkManager（GMA transitive 依賴）啟動時反射實體化失敗 → `Unable to get provider androidx.startup.InitializationProvider` FATAL。**僅 release 會當**（debug 不 minify；先前模擬器實測都走 debug APK，所以沒暴露）。修法：`android/app/proguard-rules.pro` 的 `-keep class * extends androidx.room.RoomDatabase { *; }` ＋ release block 的 `proguardFiles("proguard-rules.pro")`。2026-11-15 實測：修後 release APK 在 jack_android36 安裝啟動正常、Banner 正常（截圖 `docs/play/release-smoke.png`）。之後引入含 Room 的 plugin 若再遇反射類被刪，先查 `usage.txt` 取證。
 
 ### 換行符號雜訊
 全域 git `core.autocrlf = true`，repo 內**沒有** `.gitattributes` → `git add` 時會出現 `LF will be replaced by CRLF` 警告。屬正常現象，不要因此去「修正」那些檔案。若要讓跨平台貢獻乾淨，加 `.gitattributes`（`* text=auto eol=lf`）勝過個別調整。
@@ -119,7 +122,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 - **四平台圖示由 `tool/generate_icons.py` 產生**（來源圖 `docs/icons/Logo2.jpg`，需本機 Python 的 PIL＋numpy）。要改圖示就改腳本再重跑，**不要手改** `android/.../res/mipmap-*/`、`ios/.../AppIcon.appiconset/` 或 `windows/runner/resources/app_icon.ico` 那些產出檔。刻意**不引入 `flutter_launcher_icons`**（依依賴政策，它不是明確需求）。Android 端是 legacy＋自適應圖示並存（`mipmap-anydpi-v26/ic_launcher.xml` 與 `ic_launcher_round.xml`，manifest 有 `roundIcon`）；前景白圖騰按「安全區＝直徑 66dp 的圓」縮放，若改成依方框縮放會被啟動器的圓形遮罩切掉四角的 ＋－×÷。
 - `flutter create .` 可安全用來補平台目錄：`.metadata` 已把 `lib/main.dart` 列為 `unmanaged_files`，不會被覆蓋。使用前先確認 `flutter config` 的 `--enable-windows-desktop` / `--enable-linux-desktop` 仍開著。
 - `pubspec.lock` **有進版控**，別隨手 `flutter pub upgrade`，會產生無關 diff。
-- Android `applicationId` / namespace = `wenhsiaoyi.jack_calculator`（含底線）。上架前請確認商店是否接受。
+- Android `applicationId` = `namespace` = `com.wenhsiaoyi.jackcalculator`（2026-11-15 變更、使用者核定；**Play 包名首次上傳後永久固定**）。`MainActivity.kt` 的 package 跟 namespace 走（manifest `.MainActivity` 以 namespace 解析），改時兩者要一起動。Linux `APPLICATION_ID` 維持舊值 `wenhsiaoyi.jack_calculator`（桌機非上架目標，刻意不連動）。
 - Android 工具鏈版本：AGP 9.1.1（2026-11-14 從 9.1.0 升級：Flutter 3.50 最低要求 9.1.1，否則 debug／release APK 建置都失敗）、Kotlin 2.4.0、Gradle 9.3.1；AGP 9.1.1 會另產 `android/build/reports/`，已加進 `.gitignore`；`android/app/build.gradle.kts` 宣告 Java 17，但**實際執行用的是 Android Studio 的 JBR 25.0.3**（見上方 JDK 一節）
 - `analysis_options.yaml` 只含 `flutter_lints` 預設規則，並把 `build/`、`android/`、`ios/`、`windows/`、`linux/` 排除於 analyzer 之外 —— 改平台原生檔不會被 lint 抓到。
 - `.idea/`、`*.iml`、`build/`、`.dart_tool/` 已被 `.gitignore` 涵蓋，本機 JetBrains 相關檔案不會出現在 `git status`。
@@ -133,7 +136,7 @@ Windows 主機上 `flutter build ios` / `flutter build linux` 必定失敗（分
 ## Terminal & ADB Execution Guidelines
 
 1. 查效能一律走 `.\scripts\` 底下現成的腳本，參數直接傳，不在指令裡拼 PowerShell 字串：
-   - CPU：`.\scripts\measure_cpu.ps1 -Package wenhsiaoyi.jack_calculator -Seconds 30`
+   - CPU：`.\scripts\measure_cpu.ps1 -Package com.wenhsiaoyi.jackcalculator -Seconds 30`
    - 需要裝置的 adb 子命令（自帶裝置檢查）：`.\scripts\adb_run.ps1 shell top -n 1`
    - 其他 adb 子命令（原樣轉送，不檢查裝置）：`.\scripts\adb_monitor.ps1 install build\app\outputs\flutter-apk\app-release.apk`
 
@@ -221,6 +224,49 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **Banner 顯示 15 秒後自動消失**：`BannerAdView.visibleDuration`（常數有測試鎖定），計時從 `onAdLoaded` 實際顯示起算；時間到先離樹再 dispose，本次啟動不再出現、冷啟動重新顯示 15 秒；進設定頁再回來不重置。隱藏後鍵盤區 `Expanded` 收回空間。
 - **設定頁「支持我們」改滿版實心膠囊**：`FilledButton.icon`（56dp 高、`StadiumBorder`、字級 16 w600、主題主色實心）；載入中 `onPressed: null` 且圖示換 spinner，spinner 色對齊 M3 disabled 前景（`onSurface` alpha 0.38）。key／字串／插屏流程不變。
 - **計時驗證法**：debug APK 冷啟動後 +8s 截圖應見 Banner、+26s 應消失；兩處變更都在 `AdService.supported` 的 mobile 闸門內，widget test（Windows host）觸發不到，沿用「模擬器實測為證」裁定。證據：`docs/admob/polish-banner-present.png`／`polish-banner-gone.png`／`polish-support-capsule.png`／`polish-thanks.png`（jack_android36、繁中）。
+
+## Firebase／Google Analytics（2026-11-15 接入，使用者裁定）
+
+原生層 Gradle 接入（JackCompass 同款模式），**不引 Flutter plugin**、不佔 pub 一階依賴名額。
+
+- **帳戶資訊**：Google Analytics 帳戶 ID `416348844`（名稱 JackCalculator）；Firebase 專案 `jackcalculator-site`、專案編號 `803093500271`；Android 應用程式 `mobilesdk_app_id` = `1:803093500271:android:ad0f14a00f45b2ec6d589a`（包名 `com.wenhsiaoyi.jackcalculator`）。
+- **google-services.json**：在 `android/app/google-services.json`（plugin 只讀 app 模組；使用者原放 `android/` 根目錄，2026-11-15 搬移）。JSON 的 `services` 僅 `appinvite_service`、**無 analytics-service 塊屬正常**（JackCompass 上線中的 JSON 也是如此）；GA4 資源連結在 Firebase Console 側，不在這份檔案。內容為 client 端設定（含可內嵌 APK 的 API key）、非機密；JackCompass 有進版控，本專案 2026-11-15 經使用者裁定跟進（`android/` 根目錄的重複檔維持 untracked、不 commit）。
+- **Gradle 設定**：project-level `android/build.gradle.kts` 走 `buildscript { dependencies { classpath("com.google.gms:google-services:4.3.3") } }`（使用者指定版本，**實測與 AGP 9.1.1 相容**，不必升 4.5.0）；app 端 `id("com.google.gms.google-services")` ＋ `implementation(platform("com.google.firebase:firebase-bom:35.1.0"))` ＋ `implementation("com.google.firebase:firebase-analytics")`（BoM 與 JackCompass 實測同版；Analytics 本體一定要 `implementation`，`platform()` 只給版本約束、類別不會進 APK）。
+- **驗證證據**：plugin 產出 `build/app/generated/res/google-services/release/values/values.xml` 的 `google_app_id`／`project_id` 與 JSON 一致；release APK 在 jack_android36 的 logcat 出現 `FA: App measurement initialized, version: 192000`（pid 與本 app 相符）；截圖 `docs/play/firebase-smoke.png`。體積：APK 50.4MB（+0.4MB）、AAB 53.3MB（+1.0MB），簽章複驗通過。
+- **logcat 坑**：本模擬器全緩衝 `logcat -d` 極慢、看似 hang；改 `logcat -d -s FA FA-SVC` 限 tag。指令即使被 timeout 殺掉，輸出檔可能已含完整證據——先讀檔再重試。
+
+## 開發者網站與 Firebase Hosting（2026-11-15 建立）
+
+- **佈局**：`site/`（firebase.json、.firebaserc、.gitignore、public/index.html、public/privacy.html），鏡像 JackCompass `ads-txt/` 結構；純靜態雙語（繁中＋英文同頁）、無 JS。
+- **URL**：`https://jackcalculator-site.web.app/` 與 `https://jackcalculator-site.web.app/privacy.html`（**Play Console listing 的隱私政策 URL 用後者**）。
+- **部署**：於 `site/` 執行 `firebase deploy --only hosting`（CLI 已登入 wenhsiaoyi@gmail.com；專案 jackcalculator-site 與 App 的 Firebase／GA 同專案）。
+- **隱私立場裁定（2026-11-15）**：照現況如實寫——無 UMP 同意表單、Analytics 預設收集（含裝置提供之廣告識別碼）、本機僅五項設定；**UMP／同意閘門落地時必須同步更新 privacy.html 與生效日**（政策第十節承諾）。
+- **app-ads.txt 暫不放**：現仍測試廣告 ID；正式 ID 落地時依 JackCompass 格式（`google.com, pub-<ID>, DIRECT, f08c47fec0942fa0`）補於 public/。
+- spec：`docs/superpowers/specs/2026-11-15-jack-calculator-site-design.md`；plan：`docs/superpowers/plans/2026-11-15-jack-calculator-site.md`。
+
+## Google Play Publishing API（Play Console 上架管理；前置已完成，待 Console 建 app）
+
+後續上架／軌道管理要走 API 自動化操作 Play Console。官方總覽 zh-tw 本機快照：`docs/google-play-developer-publishing-api.html`（2026-11-15 存，頁面更新 2025-12-19）；線上 `https://developers.google.com/android-publisher?hl=zh-tw`，常用子頁 `getting_started`／`edits`／`tracks`／`upload`／`api-ref/rest`。**zh-tw 頁是 AI 翻譯、有錯**（production 譯成「製片」），軌道／欄位名稱以 REST 參考與實測為準。操作範本參考 JackCompass 已實測一輪：`E:\projects\JackCompass\AGENTS.md`「製版與上傳」節與 `E:\projects\JackCompass\scripts\play_upload.mjs`（純 Node 內建模組、零依賴）。
+
+### 核心模型與實測參數
+- **edit 事務**：`POST /applications/<package>/edits` 開草稿 → 上傳 AAB、`PUT tracks/<track>`、改 listing 都掛同一個 edit → `POST edits/<id>:commit` 一次生效；commit 前不生效，edit 被捨棄則上傳產物一起丟；commit 後變更可能數小時才到使用者。查狀態：開 edit → `GET tracks` → `DELETE edit` 收尾（JackCompass `status` 子命令做法）。
+- **媒體上傳走不同前綴**：一般 JSON API 是 `https://androidpublisher.googleapis.com/androidpublisher/v3/...`；AAB／APK 上傳是 `https://androidpublisher.googleapis.com/upload/androidpublisher/v3/.../bundles?uploadType=media`（`Content-Type: application/octet-stream`）。少 `/upload` 會回 `400 Invalid JSON payload received. Unexpected token. PK`，訊息看不出是路徑問題（JackCompass 實測踩過）。
+- 軌道：`production`（正式版，可階段推出）、`beta`（公開測試）、`alpha`（測試軌道）、內部測試。**內部測試軌名官方文件（中英文皆）寫 `qa`，但 JackCompass 實測用 `internal` 成功**；兩者關係（別名或獨立軌道）未驗證 —— 操作前先跑 `status` 看實際軌道清單，不要猜名字。
+- release `status`：`draft`（只存草稿、不派送）、`completed`、`inProgress`（階段推出，搭 `userFraction` 0–1 逐步提高）、`halted`（暫停；暫停 `completed` 版本會退回上一個 `completed`）。
+- **versionCode 只能往上加**，Play 用過的號碼不能重傳；Flutter 端是 `pubspec.yaml` 的 `version: x.y.z+N` 手動加，現況 `1.0.0+1`（pubspec.yaml:19），Play 上還沒有這款 app。
+
+### 權限前置與憑證（本機憑證，永不 commit）
+- 前置（getting_started）：① Google Cloud 專案啟用 **Google Play Developer API**（舊版「把開發者帳戶連結到 Cloud 專案」步驟已廢，不用做）；② 建 service account；③ **Play Console「使用者與權限」邀請 SA email 並授予發佈權限** —— SA 只對被邀請的開發者帳號／app 有權限。
+- 驗證：SA JSON → RS256 JWT → `token_uri` 換 access token，scope `https://www.googleapis.com/auth/androidpublisher`（JackCompass 腳本實測做法）。
+- 本機已有 JackCompass 在用的 SA JSON：`C:\Users\wenhs\Documents\Google\gen-lang-client-0845794124-ac909d828649.json`（`playapi-hywen@gen-lang-client-0845794124.iam.gserviceaccount.com`，2026-11-15 確認存在）；`PLAY_SA_JSON` 環境變數可換金鑰。**該 SA 對 JackCalculator 是否有權限未驗證**：Play Console 建立 `com.wenhsiaoyi.jackcalculator` 並邀請 SA 之前，API 無法操作它。
+- 與 keystore 同級對待：不 commit、不複製進 repo、不貼進對話或 commit message。
+
+### 本專案上架前待辦
+1. **release 簽章與 R8 當機：已完成（2026-11-15）**——upload keystore、條件式 signingConfig、`flutter build appbundle` 實測、AAB 簽章驗證通過；Flutter 3.50 R8 release 當機已修（見上方簽章與 R8 兩節）。
+2. **Play Console 建 app ＋ 邀請 SA（使用者動作，現況擋住上傳）**：Console 建立包名 `com.wenhsiaoyi.jackcalculator` 的 app（**包名首次上傳後永久固定**），「使用者與權限」邀請 `playapi-hywen@gen-lang-client-0845794124.iam.gserviceaccount.com` 並授予發佈權限。API 不能代建 app（2026-11-15 探測回 404）。完成後先跑 `node scripts/play_upload.mjs status` 看實際軌道清單再上傳。
+3. AdMob 正式 ID／清空 `testDeviceIds`／UMP 同意（見 AdMob 節「上架前待辦」）——屬正式發佈前需求，不擋內部測試軌上傳。
+4. `scripts/play_upload.mjs` 已自 JackCompass 複製適配（2026-11-15）：`PACKAGE_NAME` = applicationId `com.wenhsiaoyi.jackcalculator`（與 namespace 同值）、預設 release 名 `Jack計算機 <versionCode>`；憑證路徑／`PLAY_SA_JSON` 與 JackCompass 相同。三支 adb ps1 保留本專案強化版（exit code 傳播、多 pid、`/proc` stat 解析、子命令白名單），未用 JackCompass 舊版覆蓋。用法：`node scripts/play_upload.mjs status`／`upload <aab> --track internal --status completed --name "…" --notes "…"`。**預設只推內部測試軌；推 production 是對外發佈，須使用者明確指示**。
+5. **Listing 隱私政策 URL 已就緒**：`https://jackcalculator-site.web.app/privacy.html`（2026-11-15 上線）；Console 建 app 後填入 listing。
 
 ## 中文用語規範（台灣正體）
 
