@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +8,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../bloc/language_cubit.dart';
 import '../bloc/settings_cubit.dart';
 import '../core/ad_service.dart';
+import '../core/analytics_service.dart';
 import '../core/app_locale.dart';
 import '../core/app_strings.dart';
 import '../engine/calc_settings.dart';
@@ -57,6 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _onSupportTap(AppStrings strings) async {
+    await AnalyticsService.logEvent('support_us_tap');
     setState(() => _loadingAd = true);
     final ad = await AdService.loadInterstitial();
     if (!mounted) return;
@@ -172,9 +176,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                     selected: {selected},
                     showSelectedIcon: false,
-                    onSelectionChanged: (selection) => context
-                        .read<LanguageCubit>()
-                        .setLanguage(selection.first),
+                    onSelectionChanged: (selection) {
+                      final selected = selection.first;
+                      unawaited(AnalyticsService.logEvent('language_change', {
+                        'language':
+                            selected?.locale.toLanguageTag() ?? 'system',
+                      }));
+                      context.read<LanguageCubit>().setLanguage(selected);
+                    },
                   ),
                 ),
               ),

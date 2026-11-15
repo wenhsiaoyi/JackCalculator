@@ -6,6 +6,7 @@ import 'bloc/calculator_cubit.dart';
 import 'bloc/language_cubit.dart';
 import 'bloc/settings_cubit.dart';
 import 'core/ad_service.dart';
+import 'core/analytics_service.dart';
 import 'core/app_locale.dart';
 import 'core/app_strings.dart';
 import 'core/theme.dart';
@@ -15,6 +16,7 @@ import 'views/calculator_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AdService.initialize();
+  await AnalyticsService.initialize();
   runApp(const JackCalculator());
 }
 
@@ -51,6 +53,7 @@ class JackCalculator extends StatelessWidget {
             ],
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
+            navigatorObservers: AnalyticsService.observers,
             home: const CalculatorScreen(),
           );
         },

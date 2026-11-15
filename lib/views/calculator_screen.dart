@@ -145,7 +145,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _openSettings(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/settings'),
+          builder: (_) => const SettingsScreen(),
+        ),
       );
 
   Widget _row(List<Widget> buttons) =>
