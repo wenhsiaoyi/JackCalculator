@@ -8,7 +8,11 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 class AdService {
   const AdService._();
 
-  static bool get supported => Platform.isAndroid || Platform.isIOS;
+  /// 廣告總開關：2026-11-16 使用者要求暫時關閉廣告與支持按鈕；改回 true 即全數恢復。
+  static const bool enabled = false;
+
+  static bool get supported =>
+      enabled && (Platform.isAndroid || Platform.isIOS);
 
   /// jack_android36 測試裝置 ID（spec D3）：ANDROID_ID 的 MD5 大寫
   /// （logcat 未印 setTestDeviceIds 訊息，走備援路徑取得）。
