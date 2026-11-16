@@ -14,7 +14,7 @@ Jack計算機。Flutter app，private repo：https://github.com/wenhsiaoyi/JackC
 - **開發工具快取全部在 E:，不要寫回 C:** `GRADLE_USER_HOME=E:\gradle-home`、`PUB_CACHE=E:\pub-cache`（使用者層級環境變數）。Gradle wrapper 指定的 **Gradle 9.3.1 已手動安裝**在 `E:\gradle-home\wrapper\dists\`，見下方「Gradle distribution 下載」
 - **`C:\tools\Android` 那套 30.30 GB 的舊 Android SDK 已於 2026-10-13 刪除**，見下方「環境變更」
 - 無 codegen（未引入 build_runner）、第三方 plugin：`shared_preferences`、`google_mobile_ads`（**僅 Android／iOS 生效**，2026-11-14 AdMob 一輪引入，見依賴政策例外）；state management 用 **flutter_bloc（Cubit）**、高精度數學用 **decimal**。一階依賴：`cupertino_icons`、`flutter_bloc`、`decimal`、`shared_preferences`、`google_mobile_ads`、`flutter_localizations`（**SDK 套件，`sdk: flutter`，不是 plugin、不進 pub.dev**；2026-10-20 多國語系一輪引入）（transitive：bloc/provider/nested、rational/intl、`shared_preferences_*` 平台家族、`webview_flutter` 家族）。**`intl 0.20.3` 在 `pubspec.lock` 仍是 `dependency: transitive`、`pubspec.yaml` 未宣告、也不用於千分位** —— `flutter_localizations` 能在不宣告 `intl` 的前提下解析成功（實測：`pub get`／`analyze`／`test`／雙平台 build 全過，`pubspec.yaml` 與 `pubspec.lock` 在本輪零變動）。**已**引入持久化 —— Phase 2 已引入 `shared_preferences`（專案第一個 plugin），Phase 3 記錄儲存用 `hive_ce`（**不是** `hive`，見「依賴政策」）
-- **測試基線：190 條全綠**（2026-11-16 AdMob 調整一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
+- **測試基線：191 條全綠**（2026-11-16 Analytics 事件一輪終驗實測；`flutter analyze` 同時 `No issues found!`）
 - **沒有 CI**（無 `.github/`、無 pre-commit hook）。驗證只能靠本機指令
 
 ## 指令
@@ -224,6 +224,23 @@ curl -s https://pub.dev/api/packages/<name> | python -c "import json,sys;d=json.
 - **Banner 顯示 15 秒後自動消失**：`BannerAdView.visibleDuration`（常數有測試鎖定），計時從 `onAdLoaded` 實際顯示起算；時間到先離樹再 dispose，本次啟動不再出現、冷啟動重新顯示 15 秒；進設定頁再回來不重置。隱藏後鍵盤區 `Expanded` 收回空間。
 - **設定頁「支持我們」改滿版實心膠囊**：`FilledButton.icon`（56dp 高、`StadiumBorder`、字級 16 w600、主題主色實心）；載入中 `onPressed: null` 且圖示換 spinner，spinner 色對齊 M3 disabled 前景（`onSurface` alpha 0.38）。key／字串／插屏流程不變。
 - **計時驗證法**：debug APK 冷啟動後 +8s 截圖應見 Banner、+26s 應消失；兩處變更都在 `AdService.supported` 的 mobile 闸門內，widget test（Windows host）觸發不到，沿用「模擬器實測為證」裁定。證據：`docs/admob/polish-banner-present.png`／`polish-banner-gone.png`／`polish-support-capsule.png`／`polish-thanks.png`（jack_android36、繁中）。
+
+### 廣告暫時關閉（2026-11-16 使用者裁定：AdMob 審核通過後再啟用）
+
+- **總開關**：`AdService.enabled`（`lib/core/ad_service.dart`，`static const bool`），現值 **`false`**；`supported => enabled && (Platform.isAndroid || Platform.isIOS)`。Banner、插屏、「支持我們」按鈕、`MobileAds.initialize()` 全走這一道閘門——**一關全關、一開全開**。
+- **啟用方式**：把 `enabled` 改回 `true`，仅此一處，其餘程式碼不動。啟用時機＝AdMob／Play 廣告審核通過後；啟用後照「上架前待辦」清單複核（正式 ID 已就緒、testDeviceIds 已清空）。
+- **關閉方式**：`enabled` 設 `false`。副作用：`support_us_tap` 事件不再觸發（Analytics 的 screen_view／language_change 不受影響）；GA／Firebase 原生上報不受影響。
+- **實測證據**（無廣告版 debug APK、jack_android36）：`docs/analytics/noads-main8.png`（冷啟動 +8s 已無 Banner，廣告開著時此刻必然有）、`docs/analytics/noads-settings.png`（設定頁無支持按鈕、版本號 footer 上移）。
+
+## Google Analytics 事件追蹤（2026-11-16 一輪，branch `feat/analytics-events`）
+
+- 範圍裁定（使用者）：**App 事件追蹤**（screen_view＋自訂事件）；原生 GA 已接入（見下節）。程式碼由使用者自行 commit（`f8f95b8`，含版本號升 1.0.0+2 與 `docs/play/` listing 素材；`fe7ace3` 另加版本號 footer、支持按鈕改名「看廣告支持我們」）。
+- 依賴：`firebase_analytics ^13.0.1`＋`firebase_core ^5.1.0`，**依賴政策例外比照 AdMob**（僅 Android／iOS 生效）。`firebase_core` 有 Windows 原生碼（`generated_plugin_registrant.cc` 連動），`flutter build windows` 實測通過（78.2s）。
+- `lib/core/analytics_service.dart`：`supported` 閘門＋`initialize()`＋`observers`（`FirebaseAnalyticsObserver` → screen_view）＋`logEvent()`。**新版 FlutterFire 必須在 Dart 側明確 `Firebase.initializeApp()`**，不呼叫會 `[core/no-app]` 紅屏（本輪 release 實測踩到，已寫在 `main()` 的 `AdService.initialize()` 之後）。
+- 事件清單：`screen_view` `'/'`（首頁）與 `'/settings'`（`calculator_screen.dart` 的 `_openSettings` 帶 `RouteSettings(name:)`）；`language_change {language: en|zh-Hans|zh-Hant|system}`；`support_us_tap`（支持按鈕；廣告關閉期間不觸發，屬預期）。
+- 驗證：191 測試全綠（含桌面 no-op 測試）；模擬器 debug 實測——無紅屏、語言切換即時生效、插屏與感謝 SnackBar 正常。證據 `docs/analytics/analytics-main3.png`／`analytics-settings.png`／`analytics-inter.png`／`analytics-thanks2.png`／`noads-main8.png`／`noads-settings.png`。**FA logcat 事件行未捕到**（全緩衝 logcat 即使限 tag 仍極慢；`-c` 清緩衝法也逾時）——沿用「UI 行為為證」裁定；後續驗證走 `logcat -c` → 操作 → `logcat -d -s FA` 找 `Logging event (2)` 行。
+- **體積**：基線（main `0bd69e2` worktree 實測）52,885,802 → Analytics 輪 clean 重建後 **53,177,094 = +291,292 bytes（+0.28 MiB）**。
+- **增量 kernel 坑（本輪實測）**：加 plugin 後首發 release APK 43,510,354（−9.4MB），`libapp.so` 整個 view 層符號消失（`SettingsScreen`／`support_us_tap`／`language_change` 查無）——Flutter 增量編譯核心損毀，非程式問題。修法 `flutter clean`＋全量重建；驗證法：python zipfile 讀三個 ABI 的 `libapp.so`、查上述符號字串存在。
 
 ## Firebase／Google Analytics（2026-11-15 接入，使用者裁定）
 
